@@ -2,6 +2,12 @@ name: Ruby CI
 
 on:
   workflow_call:
+    inputs:
+      ruby-version:
+        description: 'The Ruby ruby-version to use'
+        default: 'default'
+        required: false
+        type: string
 
 jobs:
   tests:
@@ -11,6 +17,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
+          ruby-version: ${{ inputs.ruby-version }}
           bundler-cache: true
 
       - run: bundle exec rake test
