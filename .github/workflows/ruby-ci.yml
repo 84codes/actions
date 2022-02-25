@@ -17,6 +17,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
+          BUNDLE_GITHUB__COM: x-access-token:${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }}
           ruby-version: ${{ inputs.ruby-version }}
           bundler-cache: true
 
