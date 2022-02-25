@@ -8,6 +8,10 @@ on:
         default: ".ruby-version"
         required: false
         type: string
+      github-token:
+        description: "GitHub token for private repo dependencies"
+        required: false
+        type: string
 
 jobs:
   tests:
@@ -17,7 +21,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         env:
-          BUNDLE_GITHUB__COM: x-access-token:${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }}
+          BUNDLE_GITHUB__COM: x-access-token:${{ inputs.github-token }}
         with:
           ruby-version: ${{ inputs.ruby-version }}
           bundler-cache: true
