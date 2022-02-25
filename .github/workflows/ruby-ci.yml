@@ -4,8 +4,8 @@ on:
   workflow_call:
     inputs:
       ruby-version:
-        description: 'The Ruby ruby-version to use'
-        default: 'default'
+        description: "The Ruby ruby-version to use"
+        default: ".ruby-version"
         required: false
         type: string
 
