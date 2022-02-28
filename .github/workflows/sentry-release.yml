@@ -27,7 +27,7 @@ jobs:
         uses: getsentry/action-release@v1
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.sentry-token }}
-          SENTRY_ORG: ${{ secrets.sentry-org }}
-          SENTRY_PROJECT: ${{ secrets.sentry-project }}
+          SENTRY_ORG: ${{ inputs.sentry-org }}
+          SENTRY_PROJECT: ${{ inputs.sentry-project }}
         with:
           environment: production
