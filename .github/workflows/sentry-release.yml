@@ -1,0 +1,40 @@
+- name: Sentry release
+
+- on:
+  workflow_call:
+    inputs:
+      sentry-org:
+        description: "The Sentry org to use"
+        default: "84codes"
+        required: false
+        type: string
+      sentry-project:
+        description: "The Sentry project to use"
+        default: ${{ github.event.repository.name }}
+        required: false
+        type: string
+    secrets:
+      sentry-token:
+        description: "Sentry auth token"
+        required: true
+
+- jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      shell: bash
+      env:
+      GITHUB_CONTEXT: ${{ toJson(github) }}
+      run:   echo "$GITHUB_CONTEXT"
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create Sentry release
+      uses: getsentry/action-release@v1
+      env:
+        SENTRY_AUTH_TOKEN: ${{ secrets.sentry-token }}
+        SENTRY_ORG: ${{ secrets.sentry-org }}
+        SENTRY_PROJECT: ${{ secrets.sentry-project }}
+      with:
+        environment: production
