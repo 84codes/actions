@@ -1,0 +1,14 @@
+name: Dump context
+
+on:
+  workflow_call:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump
+        shell: bash
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"

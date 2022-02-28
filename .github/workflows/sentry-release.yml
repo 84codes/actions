@@ -19,14 +19,6 @@ on:
         required: true
 
 jobs:
-  dump:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump
-        shell: bash
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
   release:
     runs-on: ubuntu-latest
     steps:
