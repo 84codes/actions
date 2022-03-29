@@ -29,6 +29,6 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.sentry-token }}
           SENTRY_ORG: ${{ inputs.sentry-org }}
         with:
-          environment: production,
-          ignore_missing: true,
+          environment: production
+          ignore_missing: true
           projects: ${{ inputs.sentry-project }}
