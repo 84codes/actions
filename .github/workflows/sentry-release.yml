@@ -9,7 +9,7 @@ on:
         required: false
         type: string
       sentry-project:
-        description: "The Sentry project to use"
+        description: "Space-separated list of paths of projects. When omitted, falls back to repository name."
         default: ${{ github.event.repository.name }}
         required: false
         type: string
@@ -28,6 +28,7 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.sentry-token }}
           SENTRY_ORG: ${{ inputs.sentry-org }}
-          SENTRY_PROJECT: ${{ inputs.sentry-project }}
         with:
-          environment: production
+          environment: production,
+          ignore_missing: true,
+          projects: ${{ inputs.sentry-project }}
