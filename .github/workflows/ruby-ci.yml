@@ -27,3 +27,29 @@ jobs:
           bundler-cache: true
 
       - run: bundle exec rake test
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Checkout tools
+        uses: actions/checkout@v2
+        with:
+          repository: 84codes/tools
+          token: ${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }}
+          path: tools
+
+      - name: Setup ruby
+        uses: ruby/setup-ruby@v1
+
+      - name: Lint
+        uses: reviewdog/action-rubocop@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          rubocop_flags: -c tools/.rubocop.yml -DEPS
+          level: warning
+          reporter: github-pr-review
+          rubocop_extensions: rubocop-gitlab-security rubocop-performance rubocop-minitest rubocop-eightyfourcodes
