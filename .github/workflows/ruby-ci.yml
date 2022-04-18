@@ -12,6 +12,9 @@ on:
       github-token:
         description: "GitHub token for private repo dependencies"
         required: false
+      pkg-github-com:
+        description: "Value to use for BUNDLE_RUBYGEMS__PKG__GITHUB__COM"
+        required: false
 
 jobs:
   tests:
@@ -22,6 +25,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         env:
           BUNDLE_GITHUB__COM: x-access-token:${{ secrets.github-token }}
+          BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ${{ secrets.pkg-github-com }}
         with:
           ruby-version: ${{ inputs.ruby-version }}
           bundler-cache: true
