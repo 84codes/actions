@@ -39,7 +39,7 @@ jobs:
           --method POST \
           --header "Accept: application/vnd.github.v3+json" \
           --field ref=main \
-          --field environment='${{ inputs.app }}' \
+          --field environment='${{ inputs.heroku-app }}' \
           --field description='Heroku deploy from GitHub Actions' \
           --jq '.id')
         echo 'DEPLOYMENT_ID='$deploymentId >> $GITHUB_ENV
