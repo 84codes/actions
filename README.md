@@ -11,7 +11,7 @@ Working at 84codes? _Please note that **`this repository is public!`**_
 #### Heroku deploy
 
 ```yaml
-name: Deploy
+name: Deploy to Heroku
 
 on:
   workflow_run:
