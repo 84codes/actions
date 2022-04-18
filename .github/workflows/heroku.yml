@@ -1,0 +1,56 @@
+name: Heroku deploy
+
+on:
+  workflow_call:
+    inputs:
+      heroku-app:
+        description: "The Heroku app name"
+        default: ${{ github.event.repository.name }}
+        required: false
+        type: string
+    secrets:
+      heroku-key:
+        description: "Heroku API key (OAuth token)"
+        required: true
+
+jobs:
+  deploy:
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == github.event.repository.default_branch
+    concurrency: heroku_deploy
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Push to Heroku
+      env:
+        HEROKU_API_KEY: "${{ secrets.heroku-key }}"
+      run: |
+        git fetch --prune --unshallow
+        git push --force \
+          https://:$HEROKU_API_KEY@git.heroku.com/${{ inputs.heroku-app }}.git \
+          ${{ github.event.repository.default_branch }}
+
+    - name: Create deployment in GitHub
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        deploymentId=$(gh api repos/${{ github.repository }}/deployments \
+          --method POST \
+          --header "Accept: application/vnd.github.v3+json" \
+          --field ref=main \
+          --field environment='${{ inputs.app }}'
+          --field description='Heroku deploy from GitHub Actions' \
+          --jq '.id')
+        echo 'DEPLOYMENT_ID='$deploymentId >> $GITHUB_ENV
+
+    - name: Create deployment status in GitHub
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses \
+          --method POST \
+          --header "Accept: application/vnd.github.v3+json" \
+          --field state=success \
+          --field log_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }} \
+          --field environment_url=https://${{ inputs.heroku-app }}.herokuapp.com/
