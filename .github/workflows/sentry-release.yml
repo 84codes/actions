@@ -23,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 20
       - name: Create Sentry release
         uses: getsentry/action-release@v1
         env:
@@ -31,4 +33,3 @@ jobs:
           SENTRY_PROJECT: ${{ inputs.sentry-project }}
         with:
           environment: production
-          ignore_missing: true
