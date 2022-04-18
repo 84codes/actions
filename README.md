@@ -17,7 +17,6 @@ on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-  workflow_dispatch:
 
 jobs:
   heroku:
