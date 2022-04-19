@@ -8,6 +8,24 @@ Working at 84codes? _Please note that **`this repository is public!`**_
 
 ## Example workflows
 
+#### Ruby CI
+
+```yaml
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: 84codes/actions/.github/workflows/ruby-ci.yml@main
+    secrets:
+      github-token: ${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }}
+      pkg-github-com: ${{ secrets.PACKAGES_PAT }}
+```
+
 #### Heroku deploy
 
 ```yaml
@@ -22,5 +40,5 @@ jobs:
   heroku:
     uses: 84codes/actions/.github/workflows/heroku.yml@main
     secrets:
-      heroku-key: ${{ secrets.HEROKU_TOKEN }}
+      heroku-key: ${{ secrets.HEROKU_API_KEY }}
 ```
