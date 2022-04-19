@@ -8,6 +8,12 @@ on:
         default: ".ruby-version"
         required: false
         type: string
+      # https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-rubygems-registry
+      pkg-github-com-user:
+        description: "GitHub username for rubygems.pkg.github.com auth"
+        default: "machine-user-84"
+        required: false
+        type: string
     secrets:
       github-token:
         description: "GitHub token for private repo dependencies"
@@ -25,7 +31,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         env:
           BUNDLE_GITHUB__COM: x-access-token:${{ secrets.github-token }}
-          BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ${{ secrets.pkg-github-com }}
+          BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ${{ inputs.pkg-github-com-user }}:${{ secrets.pkg-github-com }}
         with:
           ruby-version: ${{ inputs.ruby-version }}
           bundler-cache: true
