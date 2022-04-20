@@ -19,11 +19,30 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  ci:
     uses: 84codes/actions/.github/workflows/ruby-ci.yml@main
     secrets:
       github-token: ${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }}
       pkg-github-com: ${{ secrets.PACKAGES_PAT }}
+```
+
+Enable code coverage check using https://github.com/reviewdog/action-setup
+
+```yaml
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: 84codes/actions/.github/workflows/ruby-ci.yml@main
+    with:
+      reviewdog: true
+    secrets:
+      reviewdog-github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 #### Heroku deploy
