@@ -47,6 +47,8 @@ jobs:
 
 #### Heroku deploy
 
+`heroku-app` is optional, uses the repo name by default.
+
 ```yaml
 name: Deploy to Heroku
 
@@ -58,6 +60,8 @@ on:
 jobs:
   heroku:
     uses: 84codes/actions/.github/workflows/heroku.yml@main
+    with:
+      heroku-app: myapp
     secrets:
       heroku-key: ${{ secrets.HEROKU_API_KEY }}
 ```
