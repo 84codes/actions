@@ -39,7 +39,7 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: 84codes/postgres
+      - uses: 84codes/postgres@v1
         if: inputs.postgres
 
       - uses: actions/checkout@v3
