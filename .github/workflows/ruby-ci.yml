@@ -46,7 +46,7 @@ jobs:
     steps:
       - name: Start PostgreSQL if requested
         if: inputs.postgres
-        uses: 84codes/postgres@v1
+        uses: 84codes/postgres@main
         with:
           env-key: ${{ inputs.postgres-env-key }}
 
