@@ -19,6 +19,11 @@ on:
         default: false
         required: false
         type: boolean
+      postgres-env-key:
+        description: "Name of the environment variable with the Postgres URL"
+        default: "ELEPHANTSQL_URL"
+        required: false
+        type: string
       reviewdog:
         description: "Enable code coverage check with https://github.com/reviewdog/action-setup"
         default: false
@@ -39,8 +44,11 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: 84codes/postgres@v1
+      - name: Start PostgreSQL if requested
         if: inputs.postgres
+        uses: 84codes/postgres@v1
+        with:
+          env-key: ${{ inputs.postgres-env-key }}
 
       - uses: actions/checkout@v3
 
