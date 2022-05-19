@@ -14,6 +14,11 @@ on:
         default: "machine-user-84"
         required: false
         type: string
+      postgres:
+        description: "Start PostgreSQL in the GitHub Actions VM"
+        default: false
+        required: false
+        type: boolean
       reviewdog:
         description: "Enable code coverage check with https://github.com/reviewdog/action-setup"
         default: false
@@ -34,6 +39,9 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
+      - uses: 84codes/postgres
+        if: inputs.postgres
+
       - uses: actions/checkout@v3
 
       - uses: ruby/setup-ruby@v1
