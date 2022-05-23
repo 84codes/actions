@@ -41,7 +41,7 @@ jobs:
           --field ref='${{ github.event.repository.default_branch }}' \
           --field environment='${{ inputs.heroku-app }}' \
           --field description='Heroku deploy from GitHub Actions' \
-          --field required_contexts='' \
+          --field required_contexts='[]' \
           --jq '.id')
         echo 'DEPLOYMENT_ID='$deploymentId >> $GITHUB_ENV
 
