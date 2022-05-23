@@ -42,7 +42,7 @@ jobs:
     with:
       reviewdog: true
     secrets:
-      reviewdog-github-token: ${{ secrets.GITHUB_TOKEN }}
+      repo-github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 #### Heroku deploy
