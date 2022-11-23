@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  ci:
+  test:
     uses: 84codes/actions/.github/workflows/ruby-ci.yml@main
     secrets:
       github-token: ${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }}
@@ -37,7 +37,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  ci:
+  test:
     uses: 84codes/actions/.github/workflows/ruby-ci.yml@main
     with:
       reviewdog: true
