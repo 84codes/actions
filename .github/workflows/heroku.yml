@@ -28,7 +28,7 @@ jobs:
       run: |
         git fetch --prune --unshallow
         git push --force \
-          https://:$HEROKU_API_KEY@git.heroku.com/${{ inputs.heroku-app }}.git \
+          https://user:$HEROKU_API_KEY@git.heroku.com/${{ inputs.heroku-app }}.git \
           ${{ github.event.repository.default_branch }}
 
     - name: Create deployment in GitHub
