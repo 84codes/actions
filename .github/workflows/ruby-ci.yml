@@ -59,6 +59,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         env:
+          BUNDLE_FROZEN: true
           BUNDLE_GITHUB__COM: x-access-token:${{ secrets.github-token }}
           BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ${{ inputs.pkg-github-com-user }}:${{ secrets.pkg-github-com }}
         with:
