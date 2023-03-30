@@ -101,5 +101,5 @@ jobs:
           github_token: ${{ secrets.repo-github-token }}
           level: warning
           reporter: github-pr-review
-          rubocop_extensions: rubocop-gitlab-security rubocop-performance rubocop-minitest rubocop-eightyfourcodes
+          rubocop_extensions: rubocop-gitlab-security rubocop-performance rubocop-minitest rubocop-eightyfourcodes rubocop-rake
           rubocop_flags: -c tools/.rubocop.yml -DEPS
