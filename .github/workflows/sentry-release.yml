@@ -33,3 +33,4 @@ jobs:
           SENTRY_PROJECT: ${{ inputs.sentry-project }}
         with:
           environment: production
+          ignore_missing: true
