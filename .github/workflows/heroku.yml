@@ -38,7 +38,7 @@ jobs:
             --jq '.id')
         echo 'DEPLOYMENT_ID='$deploymentId >> $GITHUB_ENV
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Push to Heroku
       env:

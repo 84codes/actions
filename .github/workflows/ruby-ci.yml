@@ -55,7 +55,7 @@ jobs:
         with:
           env-key: ${{ inputs.postgres-env-key }}
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: ruby/setup-ruby@v1
         env:
@@ -85,10 +85,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout project code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Checkout lint rules
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: 84codes/tools
           token: ${{ secrets.github-token }}
