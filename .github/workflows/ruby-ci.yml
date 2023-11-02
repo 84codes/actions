@@ -96,7 +96,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
 
-      - uses: reviewdog/action-rubocop@v1
+      - uses: reviewdog/action-rubocop@v2
         with:
           github_token: ${{ secrets.repo-github-token }}
           level: warning
