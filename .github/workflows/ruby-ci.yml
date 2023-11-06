@@ -96,10 +96,8 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
 
-      - uses: reviewdog/action-rubocop@v2
+      - uses: reclaim-the-stack/rubocop-action@v1
         with:
           github_token: ${{ secrets.repo-github-token }}
-          level: warning
-          reporter: github-pr-review
-          rubocop_extensions: rubocop-gitlab-security rubocop-performance rubocop-minitest rubocop-eightyfourcodes rubocop-rake rubocop-sequel
-          rubocop_flags: -c tools/.rubocop.yml -DEPS
+          rubocop_gems: rubocop-gitlab-security rubocop-performance rubocop-minitest rubocop-eightyfourcodes rubocop-rake rubocop-sequel
+          rubocop_arguments: -c tools/.rubocop.yml -DEPS
