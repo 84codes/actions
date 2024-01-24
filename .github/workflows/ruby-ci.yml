@@ -34,6 +34,11 @@ on:
         default: false
         required: false
         type: boolean
+      bundle-frozen:
+        description: "Value to use for BUNDLE_FROZEN"
+        default: true
+        required: false
+        type: boolean
     secrets:
       github-token:
         description: "GitHub token for private repo dependencies"
@@ -59,7 +64,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         env:
-          BUNDLE_FROZEN: true
+          BUNDLE_FROZEN: ${{ inputs.bundle-frozen }}
           BUNDLE_GITHUB__COM: x-access-token:${{ secrets.github-token }}
           BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ${{ inputs.pkg-github-com-user }}:${{ secrets.pkg-github-com }}
         with:
