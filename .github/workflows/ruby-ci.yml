@@ -3,6 +3,11 @@ name: Ruby CI
 on:
   workflow_call:
     inputs:
+      run:
+        description: "The command to run (e.g. bundle exec rake)"
+        default: "bundle exec rake"
+        required: false
+        type: string
       ruby-version:
         description: "The Ruby ruby-version to use"
         default: ".ruby-version"
@@ -71,7 +76,7 @@ jobs:
           ruby-version: ${{ inputs.ruby-version }}
           bundler-cache: true
 
-      - run: bundle exec rake test
+      - run: ${{ inputs.run }}
 
       - name: Setup reviewdog
         if: inputs.reviewdog
