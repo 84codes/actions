@@ -35,7 +35,7 @@ on:
         required: false
         type: boolean
       bundle-frozen:
-        description: "Value to use for BUNDLE_FROZEN"
+        description: "Value to use for BUNDLE_FROZEN environment variable"
         default: true
         required: false
         type: boolean
