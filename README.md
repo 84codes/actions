@@ -22,7 +22,7 @@ jobs:
   test:
     uses: 84codes/actions/.github/workflows/ruby-ci.yml@main
     with:
-      ruby-lint: true # needs both "github-token" and "repo-github-token"
+      ruby-lint: true # needs both "github-token" and "repo-github-token" secrets
     secrets:
       repo-github-token: ${{ secrets.GITHUB_TOKEN }} # if project uses ruby-lint or reviewdog
       github-token: ${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }} # if project uses private GitHub repos dependencies
