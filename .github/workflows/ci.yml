@@ -1,0 +1,16 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ruby-ci:
+    uses: ./.github/workflows/ruby-ci.yml
+    with:
+      ruby-version: ruby # latest stable release
+      ruby-lint: true
+    secrets:
+      github-token: ${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }}
+      repo-github-token: ${{ secrets.GITHUB_TOKEN }}

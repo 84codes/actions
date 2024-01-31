@@ -101,6 +101,8 @@ jobs:
           path: tools
 
       - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
 
       - uses: reviewdog/action-rubocop@v2
         with:
