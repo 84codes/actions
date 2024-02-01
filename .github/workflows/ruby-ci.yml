@@ -44,6 +44,16 @@ on:
         default: true
         required: false
         type: boolean
+      bundler-cache:
+        description: "Value to use for the setup-ruby input 'bundler-cache'"
+        default: true
+        required: false
+        type: boolean
+      cache-version:
+        description: "Value to use for the setup-ruby input 'cache-version'"
+        default: "0"
+        required: false
+        type: string
     secrets:
       github-token:
         description: "GitHub token for private repo dependencies"
@@ -74,7 +84,8 @@ jobs:
           BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ${{ inputs.pkg-github-com-user }}:${{ secrets.pkg-github-com }}
         with:
           ruby-version: ${{ inputs.ruby-version }}
-          bundler-cache: true
+          bundler-cache: ${{ inputs.bundler-cache }}
+          cache-version: ${{ inputs.cache-version }}
 
       - run: ${{ inputs.run }}
 
