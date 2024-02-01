@@ -9,7 +9,9 @@ jobs:
   ruby-ci:
     uses: ./.github/workflows/ruby-ci.yml
     with:
-      run: rake
+      run: |
+        rake
+        uptime
       ruby-version: ruby # latest stable release
       ruby-lint: true
     secrets:
