@@ -29,11 +29,6 @@ on:
         default: "ELEPHANTSQL_URL"
         required: false
         type: string
-      reviewdog:
-        description: "Enable code coverage check with https://github.com/reviewdog/action-setup"
-        default: false
-        required: false
-        type: boolean
       ruby-lint:
         description: "Run RuboCop using https://github.com/reviewdog/action-rubocop"
         default: false
@@ -88,20 +83,6 @@ jobs:
           cache-version: ${{ inputs.cache-version }}
 
       - run: ${{ inputs.run }}
-
-      - name: Setup reviewdog
-        if: inputs.reviewdog
-        uses: reviewdog/action-setup@v1
-        with:
-          reviewdog_version: latest
-
-      - name: Check code coverage with reviewdog
-        if: inputs.reviewdog
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.repo-github-token }}
-        run: |
-          git fetch
-          reviewdog -reporter=github-pr-review -runners=undercover
   lint:
     if: inputs.ruby-lint
     runs-on: ubuntu-latest
