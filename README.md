@@ -29,25 +29,6 @@ jobs:
       pkg-github-com: ${{ secrets.PACKAGES_PAT }} # if project uses private GitHub Packages
 ```
 
-Enable code coverage check using https://github.com/reviewdog/action-setup
-
-```yaml
-name: CI
-
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
-
-jobs:
-  test:
-    uses: 84codes/actions/.github/workflows/ruby-ci.yml@main
-    with:
-      reviewdog: true
-    secrets:
-      repo-github-token: ${{ secrets.GITHUB_TOKEN }}
-```
-
 #### Heroku deploy
 
 `heroku-app` is optional, uses the repo name by default.
