@@ -10,6 +10,8 @@ Working at 84codes? _Please note that **`this repository is public!`**_
 
 #### Ruby CI
 
+See [`ruby-ci.yml`](https://github.com/84codes/actions/blob/main/.github/workflows/ruby-ci.yml) for all inputs supported by the workflow.
+
 ```yaml
 name: CI
 
