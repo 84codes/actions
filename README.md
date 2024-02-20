@@ -26,7 +26,7 @@ jobs:
     with:
       ruby-lint: true # needs both "github-token" and "repo-github-token" secrets
     secrets:
-      repo-github-token: ${{ secrets.GITHUB_TOKEN }} # if project uses ruby-lint or reviewdog
+      repo-github-token: ${{ secrets.GITHUB_TOKEN }} # if project uses ruby-lint
       github-token: ${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }} # if project uses private GitHub repos dependencies
       pkg-github-com: ${{ secrets.PACKAGES_PAT }} # if project uses private GitHub Packages
 ```
