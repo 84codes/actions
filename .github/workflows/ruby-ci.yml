@@ -96,6 +96,10 @@ jobs:
           repository: 84codes/tools
           token: ${{ secrets.github-token }}
           path: tools
+          # only checkout the lint rules
+          sparse-checkout: |
+            .rubocop.yml
+          sparse-checkout-cone-mode: false
 
       - uses: ruby/setup-ruby@v1
         with:
