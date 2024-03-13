@@ -109,6 +109,6 @@ jobs:
         with:
           github_token: ${{ secrets.repo-github-token }}
           level: warning
-          reporter: github-check
+          reporter: ${{ github.event_name == 'pull_request' && 'github-pr-check' || 'github-check' }}
           rubocop_extensions: rubocop-gitlab-security rubocop-performance rubocop-minitest rubocop-eightyfourcodes rubocop-rake rubocop-sequel
           rubocop_flags: -c tools/.rubocop.yml -DEPS
