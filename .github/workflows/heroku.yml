@@ -8,6 +8,11 @@ on:
         default: ${{ github.event.repository.name }}
         required: false
         type: string
+      branch:
+        description: "The branch to deploy"
+        default: ${{ github.event.repository.default_branch }}
+        required: false
+        type: string
     secrets:
       heroku-key:
         description: "Heroku API key (OAuth token)"
@@ -17,7 +22,7 @@ jobs:
   deploy:
     if: |
       github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == github.event.repository.default_branch
+      github.event.workflow_run.head_branch == inputs.branch
     concurrency: ${{ inputs.heroku-app || github.event.repository.name }}
     runs-on: ubuntu-latest
     steps:
@@ -26,7 +31,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         deploymentId=$(jq -n "{
-            \"ref\": \"${{ github.event.repository.default_branch }}\",\
+            \"ref\": \"${{ inputs.branch }}\",\
             \"environment\": \"${{ inputs.heroku-app }}\",\
             \"description\": \"Heroku deploy from GitHub Actions\",\
             \"required_contexts\": []\
@@ -47,7 +52,7 @@ jobs:
         git fetch --prune --unshallow
         git push --force \
           https://user:$HEROKU_API_KEY@git.heroku.com/${{ inputs.heroku-app }}.git \
-          ${{ github.event.repository.default_branch }}
+          ${{ inputs.branch }}
 
     - name: Create deployment status in GitHub
       if: always()
