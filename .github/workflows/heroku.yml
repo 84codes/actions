@@ -44,6 +44,8 @@ jobs:
         echo 'DEPLOYMENT_ID='$deploymentId >> $GITHUB_ENV
 
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
 
     - name: Push to Heroku
       env:
