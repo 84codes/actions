@@ -52,7 +52,7 @@ jobs:
         git fetch --prune --unshallow
         git push --force \
           https://user:$HEROKU_API_KEY@git.heroku.com/${{ inputs.heroku-app }}.git \
-          ${{ inputs.branch }}
+          ${{ inputs.branch }}:main
 
     - name: Create deployment status in GitHub
       if: always()
