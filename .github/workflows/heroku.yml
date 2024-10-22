@@ -32,6 +32,7 @@ jobs:
       run: |
         deploymentId=$(jq -n "{
             \"ref\": \"${{ inputs.branch }}\",\
+            \"auto_merge\": \"false\",\
             \"environment\": \"${{ inputs.heroku-app }}\",\
             \"description\": \"Heroku deploy from GitHub Actions\",\
             \"required_contexts\": []\
