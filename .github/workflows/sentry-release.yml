@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 20
           ref: ${{ inputs.branch }}
       - name: Create Sentry release
-        uses: getsentry/action-release@v1
+        uses: getsentry/action-release@v2
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.sentry-token }}
           SENTRY_ORG: ${{ inputs.sentry-org }}
