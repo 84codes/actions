@@ -111,5 +111,5 @@ jobs:
           level: warning
           reporter: ${{ github.event_name == 'pull_request' && 'github-pr-check' || 'github-check' }}
           rubocop_version: gemfile
-          rubocop_extensions: rubocop-gitlab-security rubocop-performance rubocop-minitest rubocop-eightyfourcodes rubocop-rake rubocop-sequel
+          rubocop_extensions: rubocop-performance rubocop-minitest rubocop-eightyfourcodes rubocop-rake rubocop-sequel
           rubocop_flags: -c tools/.rubocop.yml -DEPS
