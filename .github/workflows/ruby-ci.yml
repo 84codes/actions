@@ -26,7 +26,7 @@ on:
         type: boolean
       postgres-env-key:
         description: "Name of the environment variable with the Postgres URL"
-        default: "ELEPHANTSQL_URL"
+        default: "DATABASE_URL"
         required: false
         type: string
       ruby-lint:
