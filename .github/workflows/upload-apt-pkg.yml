@@ -76,7 +76,7 @@ jobs:
             --arch ${{ inputs.arch }} \
             --sign $GPG_KEY_ID \
             --visibility=nil \
-            --prefix package-name/ \
+            --prefix ${{ inputs.package-name }}/ \
             --gpg-options="--pinentry-mode loopback --passphrase '${{ secrets.GPG_PASSPHRASE }}'" \
             ${{ inputs.file }}
         env:
