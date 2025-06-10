@@ -1,4 +1,4 @@
-name: Heroku deploy
+name: Upload .deb package to S3
 
 on:
   workflow_call:
