@@ -1,0 +1,96 @@
+name: Upload .deb package to S3
+
+on:
+  workflow_call:
+    inputs:
+      package-name:
+        description: "Name of the package to upload"
+        required: true
+        type: string
+      arch:
+        description: "Arch to upload package for"
+        required: true
+        type: string
+      file:
+        description: "File name to upload to S3"
+        required: true
+        type: string
+      codename:
+        description: "Codename for the APT repository (e.g., 'any')"
+        required: false
+        type: string
+        default: "any"
+      bucket-name:
+        description: "Name of the S3 bucket to upload to"
+        required: false
+        type: string
+        default: "apt-repos"
+      s3-region:
+        description: "AWS S3 region to upload to"
+        required: false
+        default: "us-east-1"
+        type: string
+    secrets:
+      gpg_private_key:
+        description: "GPG private key for signing releases"
+        required: true
+      gpg_passphrase:
+        description: "Passphrase for the GPG private key"
+        required: true
+      aws_access_key_id:
+        description: "AWS Access Key ID for S3 uploads"
+        required: true
+      aws_secret_access_key:
+        description: "AWS Secret Access Key for S3 uploads"
+        required: true
+
+jobs:
+  upload-to-s3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download .deb artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.file }}
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+
+      - name: Install deb-s3 gem
+        run: gem install deb-s3 -v 24.6.0
+
+      - name: Create GPG Home and Import Key
+        run: |
+          # Create a temporary GPG home directory
+          mkdir -p "${{ runner.temp }}/.gnupg"
+          chmod 700 "${{ runner.temp }}/.gnupg"
+
+          # Enable loopback pinentry mode for non-interactive passphrase entry
+          echo "allow-loopback-pinentry" >> "${{ runner.temp }}/.gnupg/gpg-agent.conf"
+
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import --passphrase "${{ secrets.GPG_PASSPHRASE }}"
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GNUPGHOME: ${{ runner.temp }}/.gnupg
+
+      - name: Upload .deb package to S3
+        run: |
+          GPG_KEY_ID=$(gpg --with-colons --fingerprint --batch | awk -F: '/^fpr:/ { print $10; exit }')
+          deb-s3 upload \
+            --bucket ${{ inputs.bucket-name }} \
+            --s3-region ${{ inputs.s3-region }} \
+            --codename ${{ inputs.codename }} \
+            --component main \
+            --arch ${{ inputs.arch }} \
+            --sign $GPG_KEY_ID \
+            --visibility=nil \
+            --prefix ${{ inputs.package-name }}/ \
+            --gpg-options="--pinentry-mode loopback --passphrase '${{ secrets.GPG_PASSPHRASE }}'" \
+            ${{ inputs.file }}
+        env:
+          GNUPGHOME: ${{ runner.temp }}/.gnupg
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
