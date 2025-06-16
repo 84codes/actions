@@ -59,7 +59,7 @@ jobs:
           bundler-cache: true
 
       - name: Install deb-s3 gem
-        run: gem install deb-s3
+        run: gem install deb-s3 -v 24.6.0
 
       - name: Create GPG Home and Import Key
         run: |
