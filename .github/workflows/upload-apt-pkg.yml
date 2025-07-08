@@ -84,6 +84,7 @@ jobs:
             --s3-region ${{ inputs.s3-region }} \
             --codename ${{ inputs.codename }} \
             --component main \
+            --preserve-versions
             --arch ${{ inputs.arch }} \
             --sign $GPG_KEY_ID \
             --visibility=nil \
