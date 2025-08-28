@@ -46,7 +46,7 @@ jobs:
             --jq '.id')
         echo 'DEPLOYMENT_ID='$deploymentId >> $GITHUB_ENV
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         ref: ${{ inputs.branch }}
 
