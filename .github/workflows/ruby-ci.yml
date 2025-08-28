@@ -71,7 +71,7 @@ jobs:
         with:
           env-key: ${{ inputs.postgres-env-key }}
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ruby/setup-ruby@v1
         env:
@@ -90,10 +90,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout project code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Checkout lint rules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: 84codes/tools
           token: ${{ secrets.github-token }}
