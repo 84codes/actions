@@ -63,6 +63,7 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Start PostgreSQL if requested
         if: inputs.postgres
@@ -86,6 +87,7 @@ jobs:
   lint:
     if: inputs.ruby-lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout project code
         uses: actions/checkout@v4

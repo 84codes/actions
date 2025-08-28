@@ -26,6 +26,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.ref_name == inputs.branch)
     concurrency: ${{ inputs.heroku-app || github.event.repository.name }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
     - name: Create deployment in GitHub
       env:
