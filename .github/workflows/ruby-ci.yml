@@ -106,3 +106,5 @@ jobs:
           level: warning
           reporter: ${{ github.event_name == 'pull_request' && 'github-pr-check' || 'github-check' }}
           rubocop_version: gemfile
+          use_bundler: true
+          skip_install: true
