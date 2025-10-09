@@ -93,12 +93,14 @@ jobs:
         uses: actions/checkout@v5
 
       - uses: ruby/setup-ruby@v1
+        env:
+          BUNDLE_FROZEN: ${{ inputs.bundle-frozen }}
+          BUNDLE_GITHUB__COM: x-access-token:${{ secrets.github-token }}
+          BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ${{ inputs.pkg-github-com-user }}:${{ secrets.pkg-github-com }}
         with:
           ruby-version: ${{ inputs.ruby-version }}
           bundler-cache: ${{ inputs.bundler-cache }}
           cache-version: ${{ inputs.cache-version }}
-        env:
-          BUNDLE_GITHUB__COM: x-access-token:${{ secrets.github-token }}
 
       - uses: reviewdog/action-rubocop@v2
         with:
