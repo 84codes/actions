@@ -92,26 +92,20 @@ jobs:
       - name: Checkout project code
         uses: actions/checkout@v5
 
-      - name: Checkout lint rules
-        uses: actions/checkout@v5
-        with:
-          repository: 84codes/tools
-          token: ${{ secrets.github-token }}
-          path: tools
-          # only checkout the lint rules
-          sparse-checkout: |
-            .rubocop.yml
-          sparse-checkout-cone-mode: false
-
       - uses: ruby/setup-ruby@v1
+        env:
+          BUNDLE_FROZEN: ${{ inputs.bundle-frozen }}
+          BUNDLE_GITHUB__COM: x-access-token:${{ secrets.github-token }}
+          BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ${{ inputs.pkg-github-com-user }}:${{ secrets.pkg-github-com }}
         with:
           ruby-version: ${{ inputs.ruby-version }}
+          bundler-cache: ${{ inputs.bundler-cache }}
+          cache-version: ${{ inputs.cache-version }}
 
       - uses: reviewdog/action-rubocop@v2
         with:
           github_token: ${{ secrets.repo-github-token }}
           level: warning
           reporter: ${{ github.event_name == 'pull_request' && 'github-pr-check' || 'github-check' }}
-          rubocop_version: gemfile
-          rubocop_extensions: rubocop-performance rubocop-minitest rubocop-eightyfourcodes rubocop-rake rubocop-sequel
-          rubocop_flags: -c tools/.rubocop.yml -DEPS
+          skip_install: true
+          use_bundler: true
