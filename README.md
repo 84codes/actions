@@ -1,53 +1,77 @@
-# Reusable workflows for GitHub Actions
+# Reusable GitHub Actions for 84codes
 
-See the docs at https://docs.github.com/en/actions/learn-github-actions/reusing-workflows
+Composite actions for common CI/CD tasks at 84codes.
 
 Working at 84codes? _Please note that **`this repository is public!`**_
 
 ---
 
-## Example workflows
+## Available Actions
 
-#### Ruby CI
+### Ruby CI Setup (`ruby-ci-setup`)
 
-See [`ruby-ci.yml`](https://github.com/84codes/actions/blob/main/.github/workflows/ruby-ci.yml) for all inputs supported by the workflow.
+Sets up everything needed for Ruby CI: PostgreSQL, LavinMQ, and Ruby environment.
+
+```yaml
+- uses: 84codes/actions/ruby-ci-setup@main
+  with:
+    postgres: true
+    lavinmq: true
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+[Read more →](./ruby-ci-setup/README.md)
+
+### Ruby Test Step (`ruby-test-step`)
+
+Run Ruby test commands in your workflow.
+
+```yaml
+- uses: 84codes/actions/ruby-test-step@main
+  with:
+    run: bundle exec rake test
+```
+
+[Read more →](./ruby-test-step/README.md)
+
+### RuboCop Lint (`rubocop-lint`)
+
+Run RuboCop linting with reviewdog (assumes Ruby is already set up).
+
+```yaml
+- uses: 84codes/actions/rubocop-lint@main
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+[Read more →](./rubocop-lint/README.md)
+
+---
+
+## Example: Complete Ruby CI Workflow
 
 ```yaml
 name: CI
 
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
+on: [push, pull_request]
 
 jobs:
-  test:
-    uses: 84codes/actions/.github/workflows/ruby-ci.yml@main
-    with:
-      ruby-lint: true # needs both "github-token" and "repo-github-token" secrets
-    secrets:
-      repo-github-token: ${{ secrets.GITHUB_TOKEN }} # if project uses ruby-lint
-      github-token: ${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }} # if project uses private GitHub repos dependencies
-      pkg-github-com: ${{ secrets.PACKAGES_PAT }} # if project uses private GitHub Packages
-```
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      # Setup Ruby environment with PostgreSQL
+      - uses: 84codes/actions/ruby-ci-setup@main
+        with:
+          postgres: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-#### Heroku deploy
+      # Run tests
+      - uses: 84codes/actions/ruby-test-step@main
+        with:
+          run: bundle exec rake test
 
-`heroku-app` is optional, uses the repo name by default.
-
-```yaml
-name: Deploy to Heroku
-
-on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-
-jobs:
-  heroku:
-    uses: 84codes/actions/.github/workflows/heroku.yml@main
-    with:
-      heroku-app: myapp
-    secrets:
-      heroku-key: ${{ secrets.HEROKU_API_KEY }}
+      # Run linting
+      - uses: 84codes/actions/rubocop-lint@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 ```

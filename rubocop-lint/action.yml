@@ -1,0 +1,36 @@
+name: "RuboCop Lint"
+description: "Run RuboCop linting with reviewdog (assumes Ruby is already set up)"
+author: "84codes"
+
+inputs:
+  github-token:
+    description: "GitHub token for reviewdog (usually GITHUB_TOKEN)"
+    required: true
+  level:
+    description: "Report level for reviewdog (info, warning, error)"
+    default: "error"
+    required: false
+  fail-level:
+    description: "Fail level for reviewdog (info, warning, error)"
+    default: "error"
+    required: false
+  reporter:
+    description: "Reporter type (github-check, github-pr-check, github-pr-review)"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run RuboCop
+      uses: reviewdog/action-rubocop@v2
+      with:
+        github_token: ${{ inputs.github-token }}
+        level: ${{ inputs.level }}
+        fail_level: ${{ inputs.fail-level }}
+        reporter: ${{ inputs.reporter || (github.event_name == 'pull_request' && 'github-pr-check' || 'github-annotations') }}
+        skip_install: true
+        use_bundler: true
+
+branding:
+  icon: "check-circle"
+  color: "purple"
