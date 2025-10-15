@@ -102,11 +102,13 @@ jobs:
           bundler-cache: ${{ inputs.bundler-cache }}
           cache-version: ${{ inputs.cache-version }}
 
-      - uses: reviewdog/action-rubocop@v2
+      - name: Run RuboCop with reviewdog
+        uses: reviewdog/action-rubocop@v2
         with:
           github_token: ${{ secrets.repo-github-token }}
           level: error
           fail_level: error
-          reporter: ${{ github.event_name == 'pull_request' && 'github-pr-check' || 'github-check' }}
+          reporter: ${{ github.event_name == 'pull_request' && 'github-pr-check' || 'github-annotations' }}
+          tool_name: rubocop
           skip_install: true
           use_bundler: true
