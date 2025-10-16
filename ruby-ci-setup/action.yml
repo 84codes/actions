@@ -38,6 +38,10 @@ inputs:
     description: "Start PostgreSQL in the GitHub Actions VM"
     default: "false"
     required: false
+  postgres-version:
+    description: "PostgreSQL version to use"
+    default: "15"
+    required: false
 
   # LavinMQ input
   lavinmq:
@@ -61,7 +65,7 @@ runs:
           --health-interval=5s \
           --health-timeout=5s \
           --health-retries=5 \
-          postgres:15
+          postgres:${{inputs.postgres-version}}
 
     - name: Wait for PostgreSQL to be ready
       if: inputs.postgres == 'true'
