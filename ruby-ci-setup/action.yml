@@ -42,6 +42,10 @@ inputs:
     description: "PostgreSQL version to use"
     default: "15"
     required: false
+  postgres-extensions:
+    description: "PostgreSQL extensions to install (space-separated list)"
+    default: "pgcrypto hstore uuid-ossp"
+    required: false
 
   # LavinMQ input
   lavinmq:
@@ -80,9 +84,9 @@ runs:
       if: inputs.postgres == 'true'
       shell: bash
       run: |
-        psql -d postgresql://postgres:password@localhost:5432/template1 -c 'CREATE EXTENSION IF NOT EXISTS pgcrypto;'
-        psql -d postgresql://postgres:password@localhost:5432/template1 -c 'CREATE EXTENSION IF NOT EXISTS hstore;'
-        psql -d postgresql://postgres:password@localhost:5432/template1 -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+        for ext in ${{inputs.postgres-extensions}}; do
+          psql -d postgresql://postgres:password@localhost:5432/template1 -c "CREATE EXTENSION IF NOT EXISTS \"$ext\";"
+        done
 
     - name: Set PostgreSQL environment variables
       if: inputs.postgres == 'true'
