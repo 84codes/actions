@@ -1,0 +1,120 @@
+name: "Ruby CI Setup"
+description: "Setup PostgreSQL, LavinMQ, and Ruby environment for CI"
+author: "84codes"
+
+inputs:
+  # Ruby inputs
+  ruby-version:
+    description: "The Ruby version to use"
+    default: ".ruby-version"
+    required: false
+  bundler-cache:
+    description: "Enable bundler caching"
+    default: "true"
+    required: false
+  cache-version:
+    description: "Cache version for cache busting"
+    default: "0"
+    required: false
+  bundle-frozen:
+    description: "Value for BUNDLE_FROZEN environment variable"
+    default: "true"
+    required: false
+
+  # GitHub tokens
+  github-token:
+    description: "GitHub token for private repo dependencies"
+    required: false
+  pkg-github-com:
+    description: "Token for rubygems.pkg.github.com"
+    required: false
+  pkg-github-com-user:
+    description: "GitHub username for rubygems.pkg.github.com auth"
+    default: "machine-user-84"
+    required: false
+
+  # PostgreSQL inputs
+  postgres:
+    description: "Start PostgreSQL in the GitHub Actions VM"
+    default: "false"
+    required: false
+  postgres-version:
+    description: "PostgreSQL version to use"
+    default: "15"
+    required: false
+  postgres-extensions:
+    description: "PostgreSQL extensions to install (space-separated list)"
+    default: "pgcrypto hstore uuid-ossp"
+    required: false
+
+  # LavinMQ input
+  lavinmq:
+    description: "Setup LavinMQ"
+    default: "false"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Start PostgreSQL
+      if: inputs.postgres == 'true'
+      shell: bash
+      run: |
+        docker run -d \
+          --name postgres \
+          -e POSTGRES_PASSWORD=password \
+          -e POSTGRES_DB=postgres \
+          -p 5432:5432 \
+          --health-cmd="pg_isready -U postgres" \
+          --health-interval=5s \
+          --health-timeout=5s \
+          --health-retries=5 \
+          postgres:${{inputs.postgres-version}}
+
+    - name: Wait for PostgreSQL to be ready
+      if: inputs.postgres == 'true'
+      shell: bash
+      run: |
+        until docker exec postgres pg_isready -U postgres; do
+          echo "Waiting for PostgreSQL..."
+          sleep 2
+        done
+
+    - name: Setup PostgreSQL extensions
+      if: inputs.postgres == 'true'
+      shell: bash
+      run: |
+        for ext in ${{inputs.postgres-extensions}}; do
+          psql -d postgresql://postgres:password@localhost:5432/template1 -c "CREATE EXTENSION IF NOT EXISTS \"$ext\";"
+        done
+
+    - name: Set PostgreSQL environment variables
+      if: inputs.postgres == 'true'
+      shell: bash
+      run: |
+        echo "PGHOST=localhost" >> $GITHUB_ENV
+        echo "PGPORT=5432" >> $GITHUB_ENV
+        echo "PGUSER=postgres" >> $GITHUB_ENV
+        echo "PGPASSWORD=password" >> $GITHUB_ENV
+
+    - name: Setup LavinMQ
+      if: inputs.lavinmq == 'true'
+      uses: cloudamqp/lavinmq-action@main
+
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Setup Ruby
+      uses: ruby/setup-ruby@v1
+      env:
+        BUNDLE_FROZEN: ${{ inputs.bundle-frozen }}
+        BUNDLE_GITHUB__COM: ${{ inputs.github-token && format('x-access-token:{0}', inputs.github-token) || '' }}
+        BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ${{ inputs.pkg-github-com && format('{0}:{1}', inputs.pkg-github-com-user, inputs.pkg-github-com) || '' }}
+      with:
+        ruby-version: ${{ inputs.ruby-version }}
+        bundler-cache: ${{ inputs.bundler-cache }}
+        cache-version: ${{ inputs.cache-version }}
+
+branding:
+  icon: "package"
+  color: "red"
