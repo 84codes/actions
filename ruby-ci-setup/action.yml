@@ -26,6 +26,10 @@ inputs:
     description: "Value for BUNDLE_FROZEN environment variable"
     default: "true"
     required: false
+  working-directory:
+    description: "Set the working-directory input for setup-ruby"
+    default: "."
+    required: false
 
   # GitHub tokens
   github-token:
@@ -121,6 +125,7 @@ runs:
         ruby-version: ${{ inputs.ruby-version }}
         bundler-cache: ${{ inputs.bundler-cache }}
         cache-version: ${{ inputs.cache-version }}
+        working-directory: ${{ inputs.working-directory }}
 
 branding:
   icon: "package"
