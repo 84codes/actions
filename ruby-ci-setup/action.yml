@@ -3,6 +3,12 @@ description: "Setup PostgreSQL, LavinMQ, and Ruby environment for CI"
 author: "84codes"
 
 inputs:
+  # Checkout inputs
+  checkout:
+    description: "If actions/checkout step should run or not"
+    default: "true"
+    required: false
+
   # Ruby inputs
   ruby-version:
     description: "The Ruby version to use"
@@ -102,6 +108,7 @@ runs:
       uses: cloudamqp/lavinmq-action@main
 
     - name: Checkout code
+      if: inputs.checkout == 'true'
       uses: actions/checkout@v5
 
     - name: Setup Ruby
