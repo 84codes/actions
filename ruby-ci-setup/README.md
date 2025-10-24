@@ -17,7 +17,7 @@ A composite GitHub Action that sets up everything needed for Ruby CI: PostgreSQL
 ```yaml
 steps:
   - uses: 84codes/actions/ruby-ci-setup@main
-    with:
+    secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
@@ -28,6 +28,7 @@ steps:
   - uses: 84codes/actions/ruby-ci-setup@main
     with:
       postgres: true
+    secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
@@ -39,6 +40,7 @@ steps:
     with:
       postgres: true
       lavinmq: true
+    secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
@@ -60,6 +62,7 @@ jobs:
         with:
           postgres: true
           lavinmq: true
+        secrets:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Multiple test steps - each shows separately in UI
@@ -133,6 +136,6 @@ jobs:
 
 ```yaml
 - uses: 84codes/actions/ruby-ci-setup@main
-  with:
+  secrets:
     github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
