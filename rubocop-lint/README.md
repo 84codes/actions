@@ -21,7 +21,7 @@ jobs:
 
       # Add linting
       - uses: 84codes/actions/rubocop-lint@main
-        with:
+        secrets:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 

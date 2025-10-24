@@ -30,14 +30,6 @@ inputs:
     description: "Set the working-directory input for setup-ruby"
     default: "."
     required: false
-
-  # GitHub tokens
-  github-token:
-    description: "GitHub token for private repo dependencies"
-    required: false
-  pkg-github-com:
-    description: "Token for rubygems.pkg.github.com"
-    required: false
   pkg-github-com-user:
     description: "GitHub username for rubygems.pkg.github.com auth"
     default: "machine-user-84"
@@ -61,6 +53,12 @@ inputs:
   lavinmq:
     description: "Setup LavinMQ"
     default: "false"
+    required: false
+
+secrets:
+  github-token: # GitHub token for private repo dependencies
+    required: false
+  pkg-github-com: # Token for rubygems.pkg.github.com
     required: false
 
 runs:
@@ -119,8 +117,8 @@ runs:
       uses: ruby/setup-ruby@v1
       env:
         BUNDLE_FROZEN: ${{ inputs.bundle-frozen }}
-        BUNDLE_GITHUB__COM: ${{ inputs.github-token && format('x-access-token:{0}', inputs.github-token) || '' }}
-        BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ${{ inputs.pkg-github-com && format('{0}:{1}', inputs.pkg-github-com-user, inputs.pkg-github-com) || '' }}
+        BUNDLE_GITHUB__COM: ${{ secrets.github-token && format('x-access-token:{0}', secrets.github-token) || '' }}
+        BUNDLE_RUBYGEMS__PKG__GITHUB__COM: ${{ secrets.pkg-github-com && format('{0}:{1}', secrets.pkg-github-com-user, secrets.pkg-github-com) || '' }}
       with:
         ruby-version: ${{ inputs.ruby-version }}
         bundler-cache: ${{ inputs.bundler-cache }}
