@@ -29,6 +29,11 @@ on:
         default: "DATABASE_URL"
         required: false
         type: string
+      lavinmq:
+        description: "Start LavinMQ in the GitHub Actions VM"
+        default: false
+        required: false
+        type: boolean
       ruby-lint:
         description: "Run RuboCop using https://github.com/reviewdog/action-rubocop"
         default: false
@@ -70,6 +75,10 @@ jobs:
         uses: 84codes/postgres@main
         with:
           env-key: ${{ inputs.postgres-env-key }}
+
+      - name: Start LavinMQ if requested
+        if: inputs.lavinmq
+        uses: cloudamqp/lavinmq-action@main
 
       - uses: actions/checkout@v5
 
