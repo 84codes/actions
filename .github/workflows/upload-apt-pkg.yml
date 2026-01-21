@@ -30,6 +30,10 @@ on:
         required: false
         default: "us-east-1"
         type: string
+      aws-role-arn:
+        description: "AWS IAM Role ARN for OIDC authentication"
+        required: true
+        type: string
     secrets:
       gpg_private_key:
         description: "GPG private key for signing releases"
@@ -37,17 +41,19 @@ on:
       gpg_passphrase:
         description: "Passphrase for the GPG private key"
         required: true
-      aws_access_key_id:
-        description: "AWS Access Key ID for S3 uploads"
-        required: true
-      aws_secret_access_key:
-        description: "AWS Secret Access Key for S3 uploads"
-        required: true
 
 jobs:
   upload-to-s3:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ inputs.aws-role-arn }}
+          aws-region: ${{ inputs.s3-region }}
       - name: Download .deb artifact
         uses: actions/download-artifact@v7
         with:
@@ -93,5 +99,3 @@ jobs:
             ${{ inputs.file }}
         env:
           GNUPGHOME: ${{ runner.temp }}/.gnupg
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
