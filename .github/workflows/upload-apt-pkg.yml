@@ -34,6 +34,10 @@ on:
         description: "AWS IAM Role ARN for OIDC authentication"
         required: true
         type: string
+      cloudfront-distribution-id:
+        description: "CloudFront distribution ID to invalidate (optional)"
+        required: false
+        type: string
     secrets:
       gpg_private_key:
         description: "GPG private key for signing releases"
@@ -99,3 +103,11 @@ jobs:
             ${{ inputs.file }}
         env:
           GNUPGHOME: ${{ runner.temp }}/.gnupg
+
+      - name: Invalidate CloudFront Cache
+        if: inputs.cloudfront-distribution-id != ''
+        uses: chetan/invalidate-cloudfront-action@v2
+        with:
+          DISTRIBUTION: ${{ inputs.cloudfront-distribution-id }}
+          PATHS: "/*"
+          AWS_REGION: ${{ inputs.s3-region }}
