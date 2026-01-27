@@ -106,8 +106,7 @@ jobs:
 
       - name: Invalidate CloudFront Cache
         if: inputs.cloudfront-distribution-id != ''
-        uses: chetan/invalidate-cloudfront-action@v2
-        with:
-          DISTRIBUTION: ${{ inputs.cloudfront-distribution-id }}
-          PATHS: "/*"
-          AWS_REGION: ${{ inputs.s3-region }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ inputs.cloudfront-distribution-id }} \
+            --paths "/*"
