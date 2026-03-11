@@ -1,0 +1,102 @@
+name: Heroku container deploy
+
+on:
+  workflow_call:
+    inputs:
+      heroku-app:
+        description: "The Heroku app name"
+        default: ${{ github.event.repository.name }}
+        required: false
+        type: string
+      branch:
+        description: "The branch to deploy"
+        default: ${{ github.event.repository.default_branch }}
+        required: false
+        type: string
+      targets:
+        description: "Space-separated Dockerfile targets to build and push"
+        default: "web release"
+        required: false
+        type: string
+    secrets:
+      heroku-key:
+        description: "Heroku API key (OAuth token)"
+        required: true
+      build-args:
+        description: "Docker build args (newline-separated KEY=VALUE pairs, typically for private dependency auth)"
+        required: false
+
+jobs:
+  deploy:
+    if: |
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == inputs.branch) ||
+      (github.event_name == 'workflow_dispatch' && github.ref_name == inputs.branch)
+    concurrency: ${{ inputs.heroku-app || github.event.repository.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Create deployment in GitHub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          deploymentId=$(jq -n "{
+              \"ref\": \"${{ inputs.branch }}\",\
+              \"auto_merge\": false,\
+              \"environment\": \"${{ inputs.heroku-app }}\",\
+              \"description\": \"Heroku container deploy from GitHub Actions\",\
+              \"required_contexts\": []\
+            }" \
+            | gh api repos/${{ github.repository }}/deployments \
+              --method POST \
+              --header "Accept: application/vnd.github.v3+json" \
+              --input - \
+              --jq '.id')
+          echo 'DEPLOYMENT_ID='$deploymentId >> $GITHUB_ENV
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Log in to Heroku Container Registry
+        run: echo ${{ secrets.heroku-key }} | docker login -u _ --password-stdin registry.heroku.com
+
+      - name: Build and push
+        env:
+          APP: ${{ inputs.heroku-app || github.event.repository.name }}
+          TARGETS: ${{ inputs.targets }}
+          BUILD_ARGS: ${{ secrets.build-args }}
+        run: |
+          build_arg_flags=""
+          if [ -n "$BUILD_ARGS" ]; then
+            while IFS= read -r line; do
+              [ -n "$line" ] && build_arg_flags="$build_arg_flags --build-arg $line"
+            done <<< "$BUILD_ARGS"
+          fi
+
+          docker build --target build $build_arg_flags .
+
+          for target in $TARGETS; do
+            docker build --target $target \
+              -t registry.heroku.com/$APP/$target .
+            docker push registry.heroku.com/$APP/$target
+          done
+
+      - name: Release
+        env:
+          HEROKU_API_KEY: ${{ secrets.heroku-key }}
+          APP: ${{ inputs.heroku-app || github.event.repository.name }}
+          TARGETS: ${{ inputs.targets }}
+        run: heroku container:release $TARGETS -a $APP
+
+      - name: Create deployment status in GitHub
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses \
+            --method POST \
+            --header "Accept: application/vnd.github.v3+json" \
+            --field state=${{ job.status }} \
+            --field log_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }} \
+            --field environment_url=https://${{ inputs.heroku-app || github.event.repository.name }}.herokuapp.com/
