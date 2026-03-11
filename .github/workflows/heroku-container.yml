@@ -15,8 +15,7 @@ on:
         type: string
       targets:
         description: "Space-separated Dockerfile targets to build and push"
-        default: "web release"
-        required: false
+        required: true
         type: string
     secrets:
       heroku-key:
