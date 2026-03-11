@@ -102,6 +102,9 @@ jobs:
           build-args: ${{ steps.prep.outputs.build-args }}
           provenance: false
 
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+
       - name: Release
         env:
           HEROKU_API_KEY: ${{ secrets.heroku-key }}
