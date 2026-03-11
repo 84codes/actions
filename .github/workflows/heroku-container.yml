@@ -71,6 +71,7 @@ jobs:
         env:
           APP: ${{ inputs.heroku-app || github.event.repository.name }}
           PROCESS_TYPES: ${{ inputs.process-types }}
+          BUILD_ARGS: ${{ secrets.build-args }}
         run: |
           {
             echo "tags<<EOF"
@@ -79,20 +80,26 @@ jobs:
             done
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
-          if [ -f .ruby-version ]; then
-            echo "ruby-version=$(cat .ruby-version)" >> "$GITHUB_OUTPUT"
-          fi
+          {
+            echo "build-args<<EOF"
+            if [ -f .ruby-version ]; then
+              echo "RUBY_VERSION=$(cat .ruby-version)"
+            fi
+            if [ -n "$BUILD_ARGS" ]; then
+              echo "$BUILD_ARGS"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
+          context: .
           push: true
           tags: ${{ steps.prep.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            ${{ steps.prep.outputs.ruby-version != '' && format('RUBY_VERSION={0}', steps.prep.outputs.ruby-version) || '' }}
-            ${{ secrets.build-args }}
+          build-args: ${{ steps.prep.outputs.build-args }}
 
       - name: Release
         env:
