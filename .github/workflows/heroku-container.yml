@@ -13,8 +13,8 @@ on:
         default: ${{ github.event.repository.default_branch }}
         required: false
         type: string
-      process-types:
-        description: "Space-separated Heroku process types to push the image as (e.g. 'web worker')"
+      targets:
+        description: "Space-separated Dockerfile targets to build and push (e.g. 'web worker release')"
         required: true
         type: string
     secrets:
@@ -85,7 +85,7 @@ jobs:
       - name: Build and push per process type
         env:
           APP: ${{ inputs.heroku-app || github.event.repository.name }}
-          PROCESS_TYPES: ${{ inputs.process-types }}
+          TARGETS: ${{ inputs.targets }}
           BUILD_ARGS: ${{ steps.prep.outputs.build-args }}
         run: |
           build_arg_flags=""
@@ -93,10 +93,10 @@ jobs:
             [ -n "$line" ] && build_arg_flags="$build_arg_flags --build-arg $line"
           done <<< "$BUILD_ARGS"
 
-          for type in $PROCESS_TYPES; do
+          for target in $TARGETS; do
             docker buildx build \
-              --target "$type" \
-              --tag "registry.heroku.com/$APP/$type" \
+              --target "$target" \
+              --tag "registry.heroku.com/$APP/$target" \
               --cache-from type=gha \
               --cache-to type=gha,mode=max \
               --provenance=false \
@@ -112,8 +112,8 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.heroku-key }}
           APP: ${{ inputs.heroku-app || github.event.repository.name }}
-          PROCESS_TYPES: ${{ inputs.process-types }}
-        run: heroku container:release $PROCESS_TYPES -a $APP
+          TARGETS: ${{ inputs.targets }}
+        run: heroku container:release $TARGETS -a $APP
 
       - name: Create deployment status in GitHub
         if: always()
