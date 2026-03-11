@@ -66,27 +66,11 @@ jobs:
 
       - uses: docker/setup-buildx-action@v4
 
-      - name: Prepare build args
-        id: prep
-        env:
-          BUILD_ARGS: ${{ secrets.build-args }}
-        run: |
-          {
-            echo "build-args<<EOF"
-            if [ -f .ruby-version ]; then
-              echo "RUBY_VERSION=$(cat .ruby-version)"
-            fi
-            if [ -n "$BUILD_ARGS" ]; then
-              echo "$BUILD_ARGS"
-            fi
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Build and push per process type
+      - name: Build and push per target
         env:
           APP: ${{ inputs.heroku-app || github.event.repository.name }}
           TARGETS: ${{ inputs.targets }}
-          BUILD_ARGS: ${{ steps.prep.outputs.build-args }}
+          BUILD_ARGS: ${{ secrets.build-args }}
         run: |
           build_arg_flags=""
           while IFS= read -r line; do
