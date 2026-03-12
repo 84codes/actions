@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Deploy Docker images to Heroku's container registry.
+# Standalone fallback for when GitHub Actions is unavailable.
+#
+# Usage:
+#   bin/heroku-container-deploy <app> <targets...>
+#   bin/heroku-container-deploy my-app web worker release
+#
+# Build args (for private dependencies) are passed via environment:
+#   BUNDLE_GITHUB__COM=x-access-token:ghp_xxx bin/heroku-container-deploy my-app web worker
+#
+# Requires: docker, heroku CLI, HEROKU_API_KEY env var
+
+if [ $# -lt 2 ]; then
+	echo "Usage: $0 <app> <targets...>" >&2
+	echo "Example: $0 my-app web worker release" >&2
+	exit 1
+fi
+
+APP="$1"
+shift
+TARGETS=("$@")
+
+: "${HEROKU_API_KEY:?Set HEROKU_API_KEY}"
+
+echo "Logging in to Heroku container registry..."
+echo "$HEROKU_API_KEY" | docker login -u _ --password-stdin registry.heroku.com
+
+build_arg_flags=()
+for var in BUNDLE_GITHUB__COM BUNDLE_RUBYGEMS__PKG__GITHUB__COM NPM_TOKEN RUBY_VERSION; do
+	if [ -n "${!var:-}" ]; then
+		build_arg_flags+=(--build-arg "$var=${!var}")
+	fi
+done
+
+for target in "${TARGETS[@]}"; do
+	echo "Building and pushing target: $target"
+	docker build \
+		--target "$target" \
+		--tag "registry.heroku.com/$APP/$target" \
+		--provenance=false \
+		"${build_arg_flags[@]}" \
+		.
+	docker push "registry.heroku.com/$APP/$target"
+done
+
+echo "Releasing: ${TARGETS[*]}"
+heroku container:release "${TARGETS[@]}" -a "$APP"
+
+echo "Done. https://$APP.herokuapp.com/"
