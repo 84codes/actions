@@ -77,6 +77,14 @@ jobs:
             [ -n "$line" ] && build_arg_flags="$build_arg_flags --build-arg $line"
           done <<< "$BUILD_ARGS"
 
+          for vfile in .*-version; do
+            [ -f "$vfile" ] || continue
+            name="${vfile#.}"
+            name="${name%-version}"
+            arg_name="$(echo "$name" | tr '[:lower:]-' '[:upper:]_')_VERSION"
+            build_arg_flags="$build_arg_flags --build-arg $arg_name=$(tr -d '[:space:]' < "$vfile")"
+          done
+
           for target in $TARGETS; do
             docker buildx build \
               --target "$target" \
