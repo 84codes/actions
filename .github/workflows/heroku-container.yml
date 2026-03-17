@@ -17,6 +17,11 @@ on:
         description: "Space-separated Dockerfile targets to build and push (e.g. 'web worker release')"
         required: true
         type: string
+      create-release:
+        description: "Create a GitHub Release after successful deploy"
+        default: true
+        required: false
+        type: boolean
     secrets:
       heroku-key:
         description: "Heroku API key (OAuth token)"
@@ -109,6 +114,36 @@ jobs:
           APP: ${{ inputs.heroku-app || github.event.repository.name }}
           TARGETS: ${{ inputs.targets }}
         run: heroku container:release $TARGETS -a "$APP"
+
+      - name: Create GitHub Release
+        if: inputs.create-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          VERSION="v$(date +'%Y.%m.%d-%H%M')"
+          COMMIT_SHA=$(git rev-parse HEAD)
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          RECENT=$(git log --oneline -5 --pretty="- %s (%h)")
+          NOTES=$(cat <<EOF
+          ## Deployed to Production
+
+          **Commit:** ${COMMIT_SHA:0:7}
+          **Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+
+          ### Latest Changes
+
+          ${COMMIT_MSG}
+
+          ### Recent Commits
+
+          ${RECENT}
+          EOF
+          )
+          gh release create "$VERSION" \
+            --title "Release $VERSION" \
+            --target "$BRANCH" \
+            --notes "$NOTES"
 
       - name: Create deployment status in GitHub
         if: always() && env.DEPLOYMENT_ID
