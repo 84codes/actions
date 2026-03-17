@@ -39,6 +39,9 @@ jobs:
     concurrency: ${{ inputs.heroku-app || github.event.repository.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
+      deployments: write
     steps:
       - name: Create deployment in GitHub
         env:
@@ -63,6 +66,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ inputs.branch }}
+          fetch-depth: 5
           persist-credentials: false
 
       - name: Log in to Heroku Container Registry
@@ -116,12 +120,11 @@ jobs:
         run: heroku container:release $TARGETS -a "$APP"
 
       - name: Create GitHub Release
-        if: inputs.create-release
+        if: inputs['create-release']
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: ${{ inputs.branch }}
         run: |
-          VERSION="v$(date +'%Y.%m.%d-%H%M')"
+          VERSION="v$(date -u +'%Y.%m.%d-%H%M%S')"
           COMMIT_SHA=$(git rev-parse HEAD)
           COMMIT_MSG=$(git log -1 --pretty=%B)
           RECENT=$(git log --oneline -5 --pretty="- %s (%h)")
@@ -142,7 +145,7 @@ jobs:
           )
           gh release create "$VERSION" \
             --title "Release $VERSION" \
-            --target "$BRANCH" \
+            --target "$COMMIT_SHA" \
             --notes "$NOTES"
 
       - name: Create deployment status in GitHub
