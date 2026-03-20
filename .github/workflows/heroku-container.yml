@@ -27,7 +27,10 @@ on:
         description: "Heroku API key (OAuth token)"
         required: true
       build-args:
-        description: "Docker build args (newline-separated KEY=VALUE pairs, typically for private dependency auth)"
+        description: "Docker build args (newline-separated KEY=VALUE pairs, for non-secret values like version overrides)"
+        required: false
+      build-secrets:
+        description: "Docker build secrets (newline-separated KEY=VALUE pairs, mounted via --secret in the Dockerfile)"
         required: false
 
 jobs:
@@ -83,11 +86,21 @@ jobs:
           APP: ${{ inputs.heroku-app || github.event.repository.name }}
           TARGETS: ${{ inputs.targets }}
           BUILD_ARGS: ${{ secrets.build-args }}
+          BUILD_SECRETS: ${{ secrets.build-secrets }}
         run: |
           build_arg_flags=()
           while IFS= read -r line; do
             [ -n "$line" ] && build_arg_flags+=(--build-arg "$line")
           done <<< "$BUILD_ARGS"
+
+          secret_flags=()
+          while IFS= read -r line; do
+            [ -n "$line" ] && secret_flags+=(--secret "id=$(echo "$line" | cut -d= -f1),env=$(echo "$line" | cut -d= -f1)")
+          done <<< "$BUILD_SECRETS"
+          # Export secret values so --secret env= can read them
+          while IFS= read -r line; do
+            [ -n "$line" ] && export "$line"
+          done <<< "$BUILD_SECRETS"
 
           for vfile in .*-version; do
             [ -f "$vfile" ] || continue
@@ -106,6 +119,7 @@ jobs:
               --provenance=false \
               --push \
               "${build_arg_flags[@]}" \
+              "${secret_flags[@]}" \
               .
           done
 
