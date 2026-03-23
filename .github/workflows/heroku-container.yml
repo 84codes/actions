@@ -22,12 +22,16 @@ on:
         default: true
         required: false
         type: boolean
+      build-args:
+        description: "Docker build args (newline-separated KEY=VALUE pairs, for non-secret values like version overrides)"
+        required: false
+        type: string
     secrets:
       heroku-key:
         description: "Heroku API key (OAuth token)"
         required: true
-      build-args:
-        description: "Docker build args (newline-separated KEY=VALUE pairs, typically for private dependency auth)"
+      build-secrets:
+        description: "Docker build secrets (newline-separated KEY=VALUE pairs, mounted via --secret in the Dockerfile)"
         required: false
 
 jobs:
@@ -82,20 +86,26 @@ jobs:
         env:
           APP: ${{ inputs.heroku-app || github.event.repository.name }}
           TARGETS: ${{ inputs.targets }}
-          BUILD_ARGS: ${{ secrets.build-args }}
+          BUILD_ARGS: ${{ inputs.build-args }}
+          BUILD_SECRETS: ${{ secrets.build-secrets }}
         run: |
-          build_arg_flags=()
+          args=()
           while IFS= read -r line; do
-            [ -n "$line" ] && build_arg_flags+=(--build-arg "$line")
+            [[ -n "$line" ]] && args+=(--build-arg "$line")
           done <<< "$BUILD_ARGS"
 
           for vfile in .*-version; do
-            [ -f "$vfile" ] || continue
-            name="${vfile#.}"
-            name="${name%-version}"
-            arg_name="$(echo "$name" | tr '[:lower:]-' '[:upper:]_')_VERSION"
-            build_arg_flags+=(--build-arg "$arg_name=$(tr -d '[:space:]' < "$vfile")")
+            [[ -f "$vfile" ]] || continue
+            name="${vfile#.}"; name="${name%-version}"
+            args+=(--build-arg "$(echo "$name" | tr '[:lower:]-' '[:upper:]_')_VERSION=$(tr -d '[:space:]' < "$vfile")")
           done
+
+          secrets=()
+          while IFS='=' read -r key value; do
+            [[ -z "$key" ]] && continue
+            export "$key=$value"
+            secrets+=(--secret "id=$key,env=$key")
+          done <<< "$BUILD_SECRETS"
 
           for target in $TARGETS; do
             docker buildx build \
@@ -105,7 +115,8 @@ jobs:
               --cache-to type=gha,mode=max \
               --provenance=false \
               --push \
-              "${build_arg_flags[@]}" \
+              "${args[@]}" \
+              "${secrets[@]}" \
               .
           done
 
