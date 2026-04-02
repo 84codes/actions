@@ -25,6 +25,9 @@ jobs:
       github.event.workflow_run.head_branch == inputs.branch) ||
       (github.event_name == 'workflow_dispatch' && github.ref_name == inputs.branch)
     concurrency: ${{ inputs.heroku-app || github.event.repository.name }}
+    env:
+      GIT_LFS_SKIP_SMUDGE: "1"
+      GIT_LFS_SKIP_PUSH: "1"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
