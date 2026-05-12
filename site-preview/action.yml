@@ -1,0 +1,171 @@
+name: "Site Preview Deploy"
+description: "Deploy a static site to an S3-backed CloudFront preview at pr-N.<domain>. Idempotent: ensures bucket exists, syncs site, attaches CSP policy if changed, invalidates cache, comments PR."
+author: "84codes"
+
+inputs:
+  pr-number:
+    description: "Pull request number, used to derive the bucket and URL"
+    required: true
+  commit-sha:
+    description: "Commit SHA being deployed, surfaced in the PR comment"
+    required: true
+  domain:
+    description: "Preview domain suffix. Previews land at https://pr-<pr-number>.<domain> and on the bucket pr-<pr-number>.<domain>"
+    required: true
+  cloudfront-distribution-id:
+    description: "CloudFront distribution ID that fronts the preview bucket"
+    required: true
+  csp-policy-name:
+    description: "Response headers policy name to attach (created if missing). Skipped unless csp-policy.json changed in the PR."
+    required: true
+  github-token:
+    description: "GITHUB_TOKEN with pull-requests: write (for the comment) and contents: read (for change detection)"
+    required: true
+  site-dir:
+    description: "Directory of the built site to sync"
+    default: "_site"
+  csp-policy-file:
+    description: "Path to the CSP policy JSON in the caller repo, used both to detect changes and as input when updating the policy"
+    default: "csp-policy.json"
+  comment-marker:
+    description: "Substring used to find and update an existing preview comment instead of posting a new one"
+    default: "Preview deployment"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Ensure preview bucket exists
+      shell: bash
+      env:
+        BUCKET: pr-${{ inputs.pr-number }}.${{ inputs.domain }}
+      run: |
+        if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+          echo "Bucket $BUCKET already exists"
+          aws s3api put-bucket-tagging --bucket "$BUCKET" \
+            --tagging 'TagSet=[{Key=VantaNonProd,Value=true}]'
+          exit 0
+        fi
+
+        echo "Creating bucket: $BUCKET"
+        aws s3api create-bucket --bucket "$BUCKET" --region us-east-1
+
+        aws s3api put-bucket-tagging --bucket "$BUCKET" \
+          --tagging 'TagSet=[{Key=VantaNonProd,Value=true}]'
+
+        aws s3api put-bucket-website --bucket "$BUCKET" \
+          --website-configuration '{
+            "IndexDocument": {"Suffix": "index.html"},
+            "ErrorDocument": {"Key": "404.html"}
+          }'
+
+        aws s3api put-public-access-block --bucket "$BUCKET" \
+          --public-access-block-configuration \
+            "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+
+        aws s3api put-bucket-policy --bucket "$BUCKET" --policy "{
+          \"Version\": \"2012-10-17\",
+          \"Statement\": [{
+            \"Sid\": \"PublicReadGetObject\",
+            \"Effect\": \"Allow\",
+            \"Principal\": \"*\",
+            \"Action\": \"s3:GetObject\",
+            \"Resource\": \"arn:aws:s3:::$BUCKET/*\"
+          }]
+        }"
+
+        aws s3api put-bucket-lifecycle-configuration --bucket "$BUCKET" \
+          --lifecycle-configuration '{
+            "Rules": [{
+              "ID": "AutoExpire",
+              "Status": "Enabled",
+              "Filter": {},
+              "Expiration": {"Days": 30}
+            }]
+          }'
+
+    - name: Deploy to S3
+      shell: bash
+      env:
+        BUCKET: pr-${{ inputs.pr-number }}.${{ inputs.domain }}
+        SITE_DIR: ${{ inputs.site-dir }}
+      run: aws s3 sync "$SITE_DIR/" "s3://$BUCKET/" --delete
+
+    - name: Detect CSP policy changes
+      id: csp
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        REPO: ${{ github.repository }}
+        CSP_FILE: ${{ inputs.csp-policy-file }}
+      run: |
+        if gh pr view "$PR_NUMBER" --repo "$REPO" --json files --jq '.files[].path' \
+            | grep -qx "$CSP_FILE"; then
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "changed=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Update preview CSP
+      if: steps.csp.outputs.changed == 'true'
+      shell: bash
+      env:
+        CSP_POLICY_NAME: ${{ inputs.csp-policy-name }}
+        DISTRIBUTION_ID: ${{ inputs.cloudfront-distribution-id }}
+        CSP_POLICY_FILE: ${{ inputs.csp-policy-file }}
+      run: |
+        "${{ github.action_path }}/update-cloudfront-csp.sh" "$CSP_POLICY_NAME" \
+          --create-if-missing \
+          --attach-to "$DISTRIBUTION_ID"
+
+    - name: Invalidate CloudFront cache
+      shell: bash
+      env:
+        DISTRIBUTION_ID: ${{ inputs.cloudfront-distribution-id }}
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id "$DISTRIBUTION_ID" \
+          --paths "/*" \
+          --query 'Invalidation.Id' \
+          --output text
+
+    - name: Comment PR with preview URL
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        COMMIT_SHA: ${{ inputs.commit-sha }}
+        REPO: ${{ github.repository }}
+        DOMAIN: ${{ inputs.domain }}
+        MARKER: ${{ inputs.comment-marker }}
+      run: |
+        PREVIEW_URL="https://pr-${PR_NUMBER}.${DOMAIN}"
+
+        COMMENT_ID=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+          --jq ".[] | select(.body | contains(\"${MARKER}\")) | .id" | head -1)
+
+        COMMENT_BODY=$(cat <<EOF
+        ## Preview deployment ready!
+
+        Your preview is available at:
+        **${PREVIEW_URL}**
+
+        This preview:
+        - Deploys automatically on every commit
+        - Has noindex headers (won't be indexed by search engines)
+        - Will be cleaned up when the PR is closed
+
+        ---
+        *Preview for commit: ${COMMIT_SHA}*
+        EOF
+        )
+
+        if [ -n "$COMMENT_ID" ]; then
+          gh api "repos/${REPO}/issues/comments/${COMMENT_ID}" \
+            --method PATCH \
+            --field body="$COMMENT_BODY"
+        else
+          gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            --method POST \
+            --field body="$COMMENT_BODY"
+        fi
