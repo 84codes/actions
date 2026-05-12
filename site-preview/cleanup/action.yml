@@ -1,0 +1,86 @@
+name: "Site Preview Cleanup"
+description: "Tear down a PR preview: delete the S3 bucket, delete the GitHub deployment environment, and comment on the PR. Idempotent — safe to re-run."
+author: "84codes"
+
+inputs:
+  pr-number:
+    description: "Pull request number whose preview should be torn down"
+    required: true
+  domain:
+    description: "Preview domain suffix. The bucket pr-<pr-number>.<domain> is deleted."
+    required: true
+  github-token:
+    description: "Token with `administration: write` (to DELETE the environment) and `pull-requests: write` (to comment). The default GITHUB_TOKEN does NOT work — DELETE /environments requires admin scope. Pass a PAT or GitHub App token (e.g. secrets.ORG_GITHUB_TOKEN_FOR_CI)."
+    required: true
+
+outputs:
+  status:
+    description: "deleted | not_found | failed"
+    value: ${{ steps.bucket.outputs.status }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Delete preview S3 bucket
+      id: bucket
+      shell: bash
+      env:
+        BUCKET: pr-${{ inputs.pr-number }}.${{ inputs.domain }}
+      run: |
+        echo "Cleaning up preview bucket: $BUCKET"
+        if aws s3 rb "s3://$BUCKET" --force; then
+          echo "Bucket $BUCKET deleted"
+          echo "status=deleted" >> "$GITHUB_OUTPUT"
+        elif ! aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+          echo "Bucket $BUCKET does not exist"
+          echo "status=not_found" >> "$GITHUB_OUTPUT"
+        else
+          echo "Failed to delete bucket $BUCKET" >&2
+          echo "status=failed" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+
+    # Requires a token with `administration: write` — the default GITHUB_TOKEN
+    # gets HTTP 403 here. 404 is fine (env never created, e.g. paths-ignore
+    # filtered the deploy); other errors surface so they aren't silently
+    # swallowed and let environments pile up.
+    - name: Delete preview GitHub environment
+      if: always()
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        REPO: ${{ github.repository }}
+        ENV_NAME: pr-${{ inputs.pr-number }}
+      run: |
+        if stderr=$(gh api -X DELETE "repos/${REPO}/environments/${ENV_NAME}" 2>&1 >/dev/null); then
+          echo "Environment ${ENV_NAME} deleted"
+        elif echo "$stderr" | grep -qE 'HTTP 404|Not Found'; then
+          echo "Environment ${ENV_NAME} already absent"
+        else
+          echo "Failed to delete environment ${ENV_NAME}:" >&2
+          echo "$stderr" >&2
+          exit 1
+        fi
+
+    - name: Comment PR with cleanup status
+      if: always() && steps.bucket.outputs.status != 'not_found'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        REPO: ${{ github.repository }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        BUCKET: pr-${{ inputs.pr-number }}.${{ inputs.domain }}
+        STATUS: ${{ steps.bucket.outputs.status }}
+      run: |
+        case "$STATUS" in
+          deleted)
+            BODY="Preview deployment for \`$BUCKET\` has been cleaned up."
+            ;;
+          *)
+            BODY="Failed to clean up preview deployment for \`$BUCKET\`. Manual cleanup may be required."
+            ;;
+        esac
+
+        gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+          --method POST \
+          --field body="$BODY"

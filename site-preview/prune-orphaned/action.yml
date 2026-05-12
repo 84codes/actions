@@ -1,0 +1,37 @@
+name: "Site Preview Prune Orphaned"
+description: "Delete S3 buckets matching pr-*.<domain> older than the cutoff. Used as a periodic safety net so closed-without-cleanup previews don't accumulate indefinitely (S3 lifecycle empties them after 30 days, but only this prunes the buckets themselves)."
+author: "84codes"
+
+inputs:
+  domain:
+    description: "Domain suffix; buckets named pr-*.<domain> are candidates"
+    required: true
+  max-age-days:
+    description: "Buckets older than this (by S3 CreationDate) are deleted"
+    default: "30"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Prune old preview buckets
+      shell: bash
+      env:
+        DOMAIN: ${{ inputs.domain }}
+        MAX_AGE_DAYS: ${{ inputs.max-age-days }}
+      run: |
+        echo "Deleting PR preview buckets older than ${MAX_AGE_DAYS} days for *.${DOMAIN}..."
+        CUTOFF=$(date -d "${MAX_AGE_DAYS} days ago" +%s)
+
+        aws s3api list-buckets \
+          --query "Buckets[?starts_with(Name, \`pr-\`) && ends_with(Name, \`.${DOMAIN}\`)].[Name,CreationDate]" \
+          --output text \
+          | while read -r BUCKET DATE; do
+              [ -z "$BUCKET" ] && continue
+
+              if [ "$(date -d "$DATE" +%s)" -lt "$CUTOFF" ]; then
+                echo "Deleting $BUCKET (created $DATE)"
+                aws s3 rb "s3://$BUCKET" --force || true
+              fi
+            done
+
+        echo "Prune complete"
