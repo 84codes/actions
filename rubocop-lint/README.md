@@ -1,6 +1,6 @@
 # RuboCop Lint
 
-A lightweight composite action for running RuboCop with reviewdog. Use this when Ruby is already set up in your workflow.
+A lightweight composite action for running RuboCop. Use this when Ruby is already set up in your workflow.
 
 ## Usage
 
@@ -21,18 +21,13 @@ jobs:
 
       # Add linting
       - uses: 84codes/actions/rubocop-lint@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## Inputs
 
-| Input | Description | Required | Default |
-|-------|-------------|----------|---------|
-| `github-token` | Token for reviewdog | **Yes** | - |
-| `level` | Report level | No | `error` |
-| `fail-level` | Fail level | No | `error` |
-| `reporter` | Reporter type | No | Auto |
+None. RuboCop reads its configuration from your project's `.rubocop.yml`.
+
+Offenses are reported as inline GitHub annotations via RuboCop's built-in `github` formatter, so no token or third-party action is required.
 
 ## When to Use
 
@@ -58,8 +53,6 @@ jobs:
           run: bundle exec rake test
 
       - uses: 84codes/actions/rubocop-lint@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## Benefits
