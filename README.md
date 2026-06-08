@@ -36,12 +36,10 @@ Run Ruby test commands in your workflow.
 
 ### RuboCop Lint (`rubocop-lint`)
 
-Run RuboCop linting with reviewdog (assumes Ruby is already set up).
+Run RuboCop linting (assumes Ruby is already set up).
 
 ```yaml
 - uses: 84codes/actions/rubocop-lint@main
-  with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 [Read more →](./rubocop-lint/README.md)
@@ -115,6 +113,4 @@ jobs:
 
       # Run linting
       - uses: 84codes/actions/rubocop-lint@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 ```

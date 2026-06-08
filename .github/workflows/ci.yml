@@ -16,4 +16,3 @@ jobs:
       ruby-lint: true
     secrets:
       github-token: ${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }}
-      repo-github-token: ${{ secrets.GITHUB_TOKEN }}
