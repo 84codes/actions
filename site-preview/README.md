@@ -7,10 +7,11 @@ Assumes AWS credentials are already configured (via `aws-actions/configure-aws-c
 ## What it does
 
 1. Ensures the per-PR S3 bucket exists (creates it with public-read, website-config, `VantaNonProd` tag, and a 30-day lifecycle rule on first run).
-2. `aws s3 sync`s `<site-dir>` into the bucket.
-3. Detects whether `csp-policy.json` changed in the PR (via `gh pr view --json files`). If it did, attaches the named CloudFront response-headers policy to the preview distribution (creating it if missing).
-4. Invalidates the preview distribution.
-5. Posts (or updates) a comment on the PR with the preview URL.
+2. `aws s3 sync`s `<site-dir>` into the bucket. Keys listed in `redirects.json` are excluded from the sync's `--delete` so the redirect objects survive.
+3. Applies redirects: for each `source -> target` in `redirects.json`, writes an S3 object at `source` carrying the website-redirect-location metadata, so the S3 website endpoint returns a 301. Missing `redirects.json` is a no-op.
+4. Detects whether `csp-policy.json` changed in the PR (via `gh pr view --json files`). If it did, attaches the named CloudFront response-headers policy to the preview distribution (creating it if missing).
+5. Invalidates the preview distribution.
+6. Posts (or updates) a comment on the PR with the preview URL.
 
 ## Inputs
 
@@ -24,6 +25,7 @@ Assumes AWS credentials are already configured (via `aws-actions/configure-aws-c
 | `github-token` | yes | `GITHUB_TOKEN` with `pull-requests: write` |
 | `site-dir` | no | Built site directory (default `_site`) |
 | `csp-policy-file` | no | Path to CSP JSON in the caller repo (default `csp-policy.json`) |
+| `redirects-file` | no | Path to redirects JSON in the caller repo (default `redirects.json`). Missing file is a no-op. |
 | `comment-marker` | no | Substring used to find/update existing preview comment (default `Preview deployment`) |
 
 ## Usage
