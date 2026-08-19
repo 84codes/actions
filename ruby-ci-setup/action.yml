@@ -107,6 +107,17 @@ runs:
         echo "PGUSER=postgres" >> $GITHUB_ENV
         echo "PGPASSWORD=password" >> $GITHUB_ENV
 
+    # Avoid delays while APT retries the unreliable Azure mirror before falling back.
+    - name: Prefer the Ubuntu archive mirror
+      if: inputs.lavinmq == 'true'
+      shell: bash
+      run: |
+        if [[ -f /etc/apt/apt-mirrors.txt ]]; then
+          sudo sed -i \
+            's|http://azure.archive.ubuntu.com/ubuntu/|https://archive.ubuntu.com/ubuntu/|' \
+            /etc/apt/apt-mirrors.txt
+        fi
+
     - name: Setup LavinMQ
       if: inputs.lavinmq == 'true'
       uses: cloudamqp/lavinmq-action@main
