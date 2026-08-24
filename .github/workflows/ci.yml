@@ -16,3 +16,25 @@ jobs:
       ruby-lint: true
     secrets:
       github-token: ${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }}
+
+  ruby-ci-setup-postgres:
+    name: ruby-ci-setup with PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./ruby-ci-setup
+        with:
+          checkout: false
+          ruby-version: ruby
+          bundler-cache: false
+          postgres: true
+          github-token: ${{ secrets.ORG_GITHUB_TOKEN_FOR_CI }}
+
+      - name: Verify PostgreSQL is usable and extensions exist
+        run: |
+          psql -d template1 -c "SELECT 1" > /dev/null
+          for ext in pgcrypto hstore uuid-ossp; do
+            psql -d template1 -tAc "SELECT 1 FROM pg_extension WHERE extname = '$ext'" | grep -q 1
+          done

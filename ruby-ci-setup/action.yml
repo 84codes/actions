@@ -85,10 +85,16 @@ runs:
       if: inputs.postgres == 'true'
       shell: bash
       run: |
-        until docker exec postgres pg_isready -U postgres; do
+        for _ in $(seq 60); do
+          if psql -d postgresql://postgres:password@localhost:5432/postgres -c "SELECT 1" > /dev/null 2>&1; then
+            exit 0
+          fi
           echo "Waiting for PostgreSQL..."
           sleep 2
         done
+        echo "PostgreSQL did not accept connections on localhost:5432 within 120s"
+        docker logs postgres
+        exit 1
 
     - name: Setup PostgreSQL extensions
       if: inputs.postgres == 'true'
