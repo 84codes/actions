@@ -6,6 +6,13 @@ on:
   workflow_dispatch:
 
 jobs:
+  site-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: shellcheck site-preview/apply-redirects.sh
+      - run: python3 site-preview/test_apply_redirects.py
+
   ruby-ci:
     uses: ./.github/workflows/ruby-ci.yml
     with:

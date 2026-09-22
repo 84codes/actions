@@ -8,7 +8,7 @@ Assumes AWS credentials are already configured (via `aws-actions/configure-aws-c
 
 1. Ensures the per-PR S3 bucket exists (creates it with public-read, website-config, `VantaNonProd` tag, and a 30-day lifecycle rule on first run).
 2. `aws s3 sync`s `<site-dir>` into the bucket. Keys listed in `redirects.json` are excluded from the sync's `--delete` so the redirect objects survive.
-3. Applies redirects: for each `source -> target` in `redirects.json`, writes an S3 object at `source` carrying the website-redirect-location metadata, so the S3 website endpoint returns a 301. Missing `redirects.json` is a no-op.
+3. Applies redirects: for each `source -> target` in `redirects.json`, writes an S3 object at `source` carrying the website-redirect-location metadata, so the S3 website endpoint returns a 301. Uploads run with up to eight concurrent AWS CLI processes; any failed upload fails the deployment. Missing or empty `redirects.json` is a no-op.
 4. Detects whether `csp-policy.json` changed in the PR (via `gh pr view --json files`). If it did, attaches the named CloudFront response-headers policy to the preview distribution (creating it if missing).
 5. Invalidates the preview distribution.
 6. Posts (or updates) a comment on the PR with the preview URL.
@@ -65,6 +65,14 @@ jobs:
 ```
 
 The caller workflow handles triggers, permissions, AWS auth, and the site build. This action handles the bits that are identical across the three site repos.
+
+## Tests
+
+Run `python3 site-preview/test_apply_redirects.py` and
+`shellcheck site-preview/apply-redirects.sh` from the repository root.
+The tests use a fake AWS CLI to check concurrency, redirect arguments, and
+failure handling. They require Python 3, Bash, jq, and xargs, and make no AWS
+requests. Both checks also run in CI.
 
 ## Related actions
 
