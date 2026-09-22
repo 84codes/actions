@@ -110,23 +110,7 @@ runs:
         BUCKET: pr-${{ inputs.pr-number }}.${{ inputs.domain }}
         REDIRECTS_FILE: ${{ inputs.redirects-file }}
       run: |
-        if [ ! -f "$REDIRECTS_FILE" ]; then
-          echo "No $REDIRECTS_FILE, skipping redirects"
-          exit 0
-        fi
-        # Mirrors production (Website::Deployer#upload): each source key becomes
-        # an empty S3 object carrying the website-redirect-location metadata, so
-        # the S3 website endpoint returns a 301 to the target.
-        count=$(jq -r 'length' "$REDIRECTS_FILE")
-        echo "Applying $count redirects to $BUCKET"
-        while IFS=$'\t' read -r source target; do
-          echo "Redirecting $source -> $target"
-          aws s3api put-object \
-            --bucket "$BUCKET" \
-            --key "$source" \
-            --website-redirect-location "$target" \
-            --content-type "text/html;charset=utf-8" >/dev/null
-        done < <(jq -r 'to_entries[] | "\(.key)\t\(.value)"' "$REDIRECTS_FILE")
+        "${{ github.action_path }}/apply-redirects.sh"
 
     - name: Detect CSP policy changes
       id: csp
