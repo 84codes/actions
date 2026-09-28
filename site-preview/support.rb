@@ -4,6 +4,9 @@ require "aws-sdk-s3"
 
 module SitePreview
   WORKERS = 8
+  MANIFEST_KEY = "_site-preview/manifest.json"
+  # Refresh on deployment before the bucket's 30-day object expiration.
+  REFRESH_AFTER = 20 * 24 * 60 * 60
 
   def self.client
     Aws::S3::Client.new(retry_mode: "standard", max_attempts: 5)

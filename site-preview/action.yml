@@ -28,7 +28,7 @@ inputs:
     description: "Path to the CSP policy JSON in the caller repo, used both to detect changes and as input when updating the policy"
     default: "csp-policy.json"
   redirects-file:
-    description: "Path to a redirects JSON in the caller repo, shaped {\"source/key.html\": \"/target.html\"}. Each entry becomes an S3 website redirect object on the preview bucket. Missing file is a no-op."
+    description: "Path to a redirects JSON in the caller repo, shaped {\"source/key.html\": \"/target.html\"}. Each entry becomes an S3 website redirect object on the preview bucket. Missing file means no redirects."
     default: "redirects.json"
   comment-marker:
     description: "Substring used to find and update an existing preview comment instead of posting a new one"
@@ -102,29 +102,12 @@ runs:
         BUCKET: pr-${{ inputs.pr-number }}.${{ inputs.domain }}
         SITE_DIR: ${{ inputs.site-dir }}
         REDIRECTS_FILE: ${{ inputs.redirects-file }}
-      run: |
-        # Redirect objects (see "Apply redirects" below) have no counterpart in
-        # SITE_DIR, so a plain `--delete` would wipe them on every run. Exclude
-        # their keys from the sync's delete pass so they survive.
-        excludes=()
-        if [ -f "$REDIRECTS_FILE" ]; then
-          while IFS= read -r key; do
-            excludes+=(--exclude "$key")
-          done < <(jq -r 'keys[]' "$REDIRECTS_FILE")
-        fi
-        aws s3 sync "$SITE_DIR/" "s3://$BUCKET/" --delete "${excludes[@]}"
-
-    - name: Apply redirects
-      shell: bash
-      env:
-        BUCKET: pr-${{ inputs.pr-number }}.${{ inputs.domain }}
-        REDIRECTS_FILE: ${{ inputs.redirects-file }}
         BUNDLE_GEMFILE: ${{ github.action_path }}/Gemfile
         BUNDLE_IGNORE_CONFIG: "true"
         BUNDLE_FROZEN: "false"
         BUNDLE_PATH: ${{ runner.temp }}/site-preview-gems
         BUNDLE_WITHOUT: test
-      run: bundle exec ruby "${{ github.action_path }}/apply_redirects.rb"
+      run: bundle exec ruby "${{ github.action_path }}/deploy.rb"
 
     - name: Detect CSP policy changes
       id: csp

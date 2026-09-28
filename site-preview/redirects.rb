@@ -10,13 +10,18 @@ module SitePreview
 
       mapping = JSON.parse(File.read(path))
       raise ArgumentError, "Redirects must be a JSON object" unless mapping.is_a?(Hash)
+      raise ArgumentError, "Redirect source is reserved for deployment: #{MANIFEST_KEY}" if mapping.key?(MANIFEST_KEY)
 
       mapping.each do |key, target|
-        unless key.is_a?(String) && !key.empty? && target.is_a?(String) && !target.empty?
-          raise ArgumentError, "Redirect sources and targets must be nonempty strings"
-        end
+        validate_entry(key, target)
       end
       mapping
+    end
+
+    def self.validate_entry(key, target)
+      return if key.is_a?(String) && !key.empty? && target.is_a?(String) && !target.empty?
+
+      raise ArgumentError, "Redirect sources and targets must be nonempty strings"
     end
 
     def self.upload(client, bucket, key, target)
