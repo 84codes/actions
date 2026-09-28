@@ -8,10 +8,17 @@ on:
 jobs:
   site-preview:
     runs-on: ubuntu-latest
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/site-preview/Gemfile
+      BUNDLE_FROZEN: "false"
     steps:
       - uses: actions/checkout@v7
-      - run: shellcheck site-preview/apply-redirects.sh
-      - run: python3 site-preview/test_apply_redirects.py
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ruby
+          bundler-cache: true
+      - name: Test site preview deployment
+        run: bundle exec ruby -Isite-preview/test -e 'Dir["site-preview/test/**/*_test.rb"].sort.each { |path| require_relative path }'
 
   ruby-ci:
     uses: ./.github/workflows/ruby-ci.yml
