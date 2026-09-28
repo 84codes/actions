@@ -37,6 +37,16 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Install preview dependencies
+      shell: bash
+      env:
+        BUNDLE_GEMFILE: ${{ github.action_path }}/Gemfile
+        BUNDLE_IGNORE_CONFIG: "true"
+        BUNDLE_FROZEN: "false"
+        BUNDLE_PATH: ${{ runner.temp }}/site-preview-gems
+        BUNDLE_WITHOUT: test
+      run: bundle install --quiet
+
     - name: Ensure preview bucket exists
       shell: bash
       env:
@@ -109,8 +119,12 @@ runs:
       env:
         BUCKET: pr-${{ inputs.pr-number }}.${{ inputs.domain }}
         REDIRECTS_FILE: ${{ inputs.redirects-file }}
-      run: |
-        "${{ github.action_path }}/apply-redirects.sh"
+        BUNDLE_GEMFILE: ${{ github.action_path }}/Gemfile
+        BUNDLE_IGNORE_CONFIG: "true"
+        BUNDLE_FROZEN: "false"
+        BUNDLE_PATH: ${{ runner.temp }}/site-preview-gems
+        BUNDLE_WITHOUT: test
+      run: bundle exec ruby "${{ github.action_path }}/apply_redirects.rb"
 
     - name: Detect CSP policy changes
       id: csp
