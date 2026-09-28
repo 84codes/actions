@@ -37,7 +37,8 @@ class RedirectsTest < Minitest::Test
       { "old.html" => "" },
       { "old.html" => nil },
       { "old.html" => ["/target/"] },
-      { "old.html" => 123 }
+      { "old.html" => 123 },
+      { "_site-preview/manifest.json" => "/target/" }
     ]
     invalid_inputs.each do |input|
       contents = input.is_a?(String) ? input : JSON.generate(input)
