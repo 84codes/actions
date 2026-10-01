@@ -10,7 +10,7 @@ Assumes AWS credentials are already configured (via `aws-actions/configure-aws-c
 2. Hashes built files and reads the previous deployment manifest and current S3 object listing.
 3. Uploads changed, missing, or aging files and redirects through one shared Ruby AWS SDK client, with up to eight workers and retries for transient failures. Redirects take precedence over built files with the same key and return a 301 from the S3 website endpoint.
 4. Removes obsolete objects and saves the deployment manifest.
-5. Detects whether `csp-policy.json` changed in the PR (via `gh pr view --json files`). If it did, attaches the named CloudFront response-headers policy to the preview distribution (creating it if missing).
+5. Detects whether `csp-policy.json` differs from the PR's base branch by comparing the file contents, which works for PRs of any size. If it does, attaches the named CloudFront response-headers policy to the preview distribution (creating it if missing).
 6. Invalidates the preview distribution.
 7. Posts (or updates) a comment on the PR with the preview URL.
 
@@ -87,7 +87,7 @@ BUNDLE_GEMFILE=site-preview/Gemfile bundle exec ruby -Isite-preview/test -e 'Dir
 bundle exec rubocop
 ```
 
-Minitest exercises SDK request arguments, content changes, unchanged builds, lifecycle refreshes, deletions, concurrency, and recovery from failed deployments without making AWS requests. Tests and Ruby linting also run in CI.
+Minitest exercises SDK request arguments, content changes, unchanged builds, lifecycle refreshes, deletions, concurrency, and recovery from failed deployments without making AWS requests. The CSP change check runs against a stubbed `gh`. Tests and Ruby linting also run in CI.
 
 ## Related actions
 

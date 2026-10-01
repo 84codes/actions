@@ -16,7 +16,7 @@ inputs:
     description: "CloudFront distribution ID that fronts the preview bucket"
     required: true
   csp-policy-name:
-    description: "Response headers policy name to attach (created if missing). Skipped unless csp-policy.json changed in the PR."
+    description: "Response headers policy name to attach (created if missing). Skipped unless csp-policy.json differs from the PR's base branch."
     required: true
   github-token:
     description: "GITHUB_TOKEN with pull-requests: write (for the comment) and contents: read (for change detection)"
@@ -116,14 +116,10 @@ runs:
         GH_TOKEN: ${{ inputs.github-token }}
         PR_NUMBER: ${{ inputs.pr-number }}
         REPO: ${{ github.repository }}
-        CSP_FILE: ${{ inputs.csp-policy-file }}
+        CSP_POLICY_FILE: ${{ inputs.csp-policy-file }}
       run: |
-        if gh pr view "$PR_NUMBER" --repo "$REPO" --json files --jq '.files[].path' \
-            | grep -qx "$CSP_FILE"; then
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "changed=false" >> "$GITHUB_OUTPUT"
-        fi
+        changed=$("${{ github.action_path }}/csp-changed.sh" "$REPO" "$PR_NUMBER" "$CSP_POLICY_FILE")
+        echo "changed=$changed" >> "$GITHUB_OUTPUT"
 
     - name: Update preview CSP
       if: steps.csp.outputs.changed == 'true'
