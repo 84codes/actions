@@ -134,7 +134,7 @@ jobs:
             --gpg-options="--pinentry-mode loopback --passphrase '${{ secrets.GPG_PASSPHRASE }}'"
           deb-s3 clean "${REPO_OPTS[@]}"
         env:
-          KEEP_VERSIONS: 10
+          KEEP_VERSIONS: 5
           GNUPGHOME: ${{ runner.temp }}/.gnupg
 
       - name: Invalidate CloudFront Cache
