@@ -16,7 +16,8 @@ module SitePreview
       else
         return "application/rss+xml" if %w[rss changelog/rss].include?(key)
 
-        MIME::Types.type_for(key).first&.content_type || "application/octet-stream"
+        type = MIME::Types.type_for(key).first&.content_type || "application/octet-stream"
+        type.start_with?("text/") ? "#{type};charset=utf-8" : type
       end
     end
 
