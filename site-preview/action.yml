@@ -33,11 +33,15 @@ inputs:
   comment-marker:
     description: "Substring used to find and update an existing preview comment instead of posting a new one"
     default: "Preview deployment"
+  upload-command:
+    description: "Command run with bash in the caller's workspace instead of the built-in upload and invalidation. It gets BUCKET, SITE_DIR, REDIRECTS_FILE and DISTRIBUTION_ID, and must upload the site and redirects, delete obsolete objects, re-upload objects before the bucket's 30-day expiration and invalidate what it changed. Empty uses the built-in uploader."
+    default: ""
 
 runs:
   using: "composite"
   steps:
     - name: Install preview dependencies
+      if: inputs.upload-command == ''
       shell: bash
       env:
         BUNDLE_GEMFILE: ${{ github.action_path }}/Gemfile
@@ -97,6 +101,7 @@ runs:
           }'
 
     - name: Deploy to S3
+      if: inputs.upload-command == ''
       shell: bash
       env:
         BUCKET: pr-${{ inputs.pr-number }}.${{ inputs.domain }}
@@ -108,6 +113,17 @@ runs:
         BUNDLE_PATH: ${{ runner.temp }}/site-preview-gems
         BUNDLE_WITHOUT: test
       run: bundle exec ruby "${{ github.action_path }}/deploy.rb"
+
+    - name: Deploy with upload command
+      if: inputs.upload-command != ''
+      shell: bash
+      env:
+        BUCKET: pr-${{ inputs.pr-number }}.${{ inputs.domain }}
+        SITE_DIR: ${{ inputs.site-dir }}
+        REDIRECTS_FILE: ${{ inputs.redirects-file }}
+        DISTRIBUTION_ID: ${{ inputs.cloudfront-distribution-id }}
+        UPLOAD_COMMAND: ${{ inputs.upload-command }}
+      run: eval "$UPLOAD_COMMAND"
 
     - name: Detect CSP policy changes
       id: csp
@@ -133,7 +149,10 @@ runs:
           --create-if-missing \
           --attach-to "$DISTRIBUTION_ID"
 
+    # An upload command invalidates what it changed. Invalidating everything
+    # after it would hide the stale content a preview should reveal.
     - name: Invalidate CloudFront cache
+      if: inputs.upload-command == ''
       shell: bash
       env:
         DISTRIBUTION_ID: ${{ inputs.cloudfront-distribution-id }}
